@@ -1,0 +1,16 @@
+{
+  "name": "spaceAndTime_Bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "vitaly.kiktiov@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.11",
+    "micro-bot": "^2.5.0",
+    "moment": "^2.22.2",
+    "suncalc": "^1.8.0"
+  },
+  "scripts": {
+    "start": "micro-bot -t ***REMOVED*** index.js"
+  }
+}
