@@ -1,9 +1,16 @@
-require('dot-env');
+require('dotenv');
 const moment = require('moment');
 const {Composer} = require('micro-bot');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
-const MongoClient = require('mongodb').MongoClient; //123
+const MongoClient = require('mongodb').MongoClient;
+
+const session = require('telegraf/session')
+const Stage = require('telegraf/stage')
+const Scene = require('telegraf/scenes/base')
+const { enter, leave } = Stage
+
+const googleMapsClient = require('@google/maps').createClient({ Promise: Promise });
 
 const dbClient = new MongoClient(process.env.MONGODB_URI, {useNewUrlParser: true})
 
@@ -26,13 +33,63 @@ app.help((ctx) => ctx.reply(
   sendLocationKeyboard
   )
 );
-app.command('location', async ctx => {
+
+const setLocationScene = new Scene('location');
+setLocationScene.enter(async ctx => {
   return ctx.reply(
-    'Пришли мне свои координаты и я рассчитаю для тебя астрологическую обстановку.\n' +
-    'Если не удаётся отправить локацию, проверь в настройках, что у телеграм есть доступ к gps',
+    'Напиши где ты находишься, или пришли мне свои координаты и я рассчитаю для тебя астрологическую обстановку.\n',
     sendLocationKeyboard
   )
+});
+setLocationScene.on('location', async ctx => {
+  try {
+    const {message: {location: {latitude: lat, longitude: lng}}} = ctx
+
+    if (!latitude || !longitude)
+      return ctx.reply('Не могу определить координаты. Проверь службы геолокации')
+
+    await saveCoordinatesToChatsCollection(ctx, [ lat, lng ])
+    await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`)
+
+    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon: lng});
+    const reportMessage = createReportMessage({moonDay})
+    await ctx.replyWithMarkdown(reportMessage, removeKb)
+  } catch (err) {
+    console.error(err);
+    await ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу', removeKb)
+  } finally {
+    leave()
+  }
+});
+setLocationScene.on('text', async ctx => {
+  try {
+    const { message: { text } } = ctx
+    const geoCodingResponse = await googleMapsClient.geocode({ address: text }).asPromise();
+    if (!geoCodingResponse.json.results.length)
+      return ctx.reply(`Не удалось определить координаты: ${text}.` +
+       `Попробуй ввести официальное название ближайшего населённого пункта`);
+
+    const { json: { results: [ { geometry: { location: { lat, lng } } } ] } } = geoCodingResponse;
+
+    await saveCoordinatesToChatsCollection(ctx, [ lat, lng ]);
+    await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
+
+    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon: lng});
+    const reportMessage = createReportMessage({moonDay})
+    await ctx.replyWithMarkdown(reportMessage, removeKb)
+    leave()
+  } catch (e) {
+    console.error(err);
+    await ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу', removeKb)
+  }
 })
+
+app.use(session())
+
+const stage = new Stage([setLocationScene], { ttl: 10 })
+app.use(stage.middleware())
+
+app.command('location', enter('location'))
 
 app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
   try {
@@ -49,30 +106,6 @@ app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
   }
 })
 
-app.on('location', async ctx => {
-  try {
-    const {message: {location: {latitude, longitude}}} = ctx
-    const chatsCollection = ctx.db.collection('chats')
-
-    if (!latitude || !longitude) return ctx.reply('Не могу определить координаты. Проверь службы геолокации')
-
-    await chatsCollection.updateOne(
-      {chatId: ctx.message.chat.id},
-      {$set: {chatId: ctx.message.chat.id, coordinates: [latitude, longitude]}},
-      {upsert: true}
-    );
-
-    await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${longitude}\nШирота: ${latitude}\n`)
-
-    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat:latitude, lon: longitude});
-    const reportMessage = createReportMessage({moonDay})
-    return ctx.replyWithMarkdown(reportMessage, removeKb)
-  } catch (err) {
-    console.error(err);
-    ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу', removeKb)
-  }
-})
-
 module.exports = {
   initialize: async bot => {
     await dbClient.connect();
@@ -81,7 +114,6 @@ module.exports = {
   },
   botHandler: app
 }
-
 
 function createReportMessage({moonDay}) {
   if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это'
@@ -94,4 +126,14 @@ function createReportMessage({moonDay}) {
 Начало следующего через: _${moment(dayEnd).fromNow()}_
 `
   return reportMessage
+}
+
+async function saveCoordinatesToChatsCollection(ctx, coordinates) {
+  const [lat, lng] = coordinates
+  const chatsCollection = ctx.db.collection('chats')
+  return chatsCollection.updateOne(
+    {chatId: ctx.message.chat.id},
+    {$set: {chatId: ctx.message.chat.id, coordinates: [lat, lng]}},
+    {upsert: true}
+  );
 }
