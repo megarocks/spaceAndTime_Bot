@@ -1,20 +1,18 @@
 require('dot-env');
 const moment = require('moment');
 const {Composer} = require('micro-bot');
-const Telegraf = require('telegraf')
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
-const geoTz = require('geo-tz')
+const MongoClient = require('mongodb').MongoClient;
+
+const dbClient = new MongoClient(process.env.MONGODB_URI, {useNewUrlParser: true})
 
 const moonCalc = require('./moonCalc');
-
-const app = new Composer();
-
 
 const sendLocationKeyboard = Extra.markup(markup => markup.keyboard([markup.locationRequestButton('📍 Оправить координаты!')]).oneTime().resize())
 const removeKb = Markup.removeKeyboard().extra()
 
-app.use(Telegraf.log())
+const app = new Composer();
 
 app.start((ctx) => ctx.reply(
   'Привет. Пришли мне свою локацию и я скажу тебе какой в этой точке пространства сейчас лунный день.' +
@@ -30,31 +28,62 @@ app.command('location', async ctx => {
   return ctx.reply('Пришли мне свои координаты и я рассчитаю для тебя астрологическую обстановку', sendLocationKeyboard)
 })
 
-app.on('location', async ctx => {
-  const { message: { location: { latitude, longitude } } } = ctx
-  return ctx.reply(`Благодарю. Координаты: ${JSON.stringify({ latitude, longitude })} приняты и сохранены. Буду держать тебя в курсе`, removeKb)
+app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
+  try {
+    const chat = await db.collection('chats').findOne({chatId: message.chat.id})
+    if (!chat) return reply('Пришли мне свои координаты, потом выполни эту команду снова', sendLocationKeyboard)
+
+    const {coordinates: [lat, lon]} = chat;
+    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon});
+    const reportMessage = createReportMessage({moonDay})
+    return replyWithMarkdown(reportMessage)
+  } catch (err) {
+    console.error(err)
+    reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу')
+  }
 })
 
-// {
-//   reply_markup: {
-//     keyboard: [[{request_location: true, text: 'Отправить координаты'}]],
-//       one_time_keyboard: true,
-//       resize_keyboard: true
-//   }
-// }
+app.on('location', async ctx => {
+  try {
+    const {message: {location: {latitude, longitude}}} = ctx
+    const chatsCollection = ctx.db.collection('chats')
 
-module.exports = app
+    await chatsCollection.updateOne(
+      {chatId: ctx.message.chat.id},
+      {$set: {chatId: ctx.message.chat.id, coordinates: [latitude, longitude]}},
+      {upsert: true}
+    )
 
-// module.exports = ({ reply, replyWithMarkdown, replyWithHTML }) => {
-//   const {latitude:lat = 49.9935, longitude:lon = 36.2304 } = {};
-//   const currentMoonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon});
-//
-//   if (!currentMoonDay) return reply('Can not calculate current moon date. Unusual astrologic situation')
-//
-//   let replyMessage = `Current moon day is: <b>${currentMoonDay.dayNumber}</b>\n`
-//   replyMessage += `Started at: <i>${moment(currentMoonDay.dayStart).format('ddd D MMM HH:mm:ss')}</i>\n`
-//   replyMessage += `Last up to: <i>${moment(currentMoonDay.dayEnd).format('ddd D MMM HH:mm:ss')}</i>\n`
-//   replyMessage += `Next day start in ${moment(currentMoonDay.dayEnd).fromNow()}\n`
-//   replyMessage += `calculation are done for location: lat: ${lat}, lon: ${lon}`
-//   return replyWithHTML(replyMessage)
-// }
+    await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${longitude}\nШирота: ${latitude}\n`)
+
+    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat:latitude, lon: longitude});
+    const reportMessage = createReportMessage({moonDay})
+    return ctx.replyWithMarkdown(reportMessage, removeKb)
+  } catch (err) {
+    console.error(err)
+    ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу', removeKb)
+  }
+})
+
+module.exports = {
+  initialize: async bot => {
+    await dbClient.connect();
+    bot.context.db = dbClient.db();
+    console.log(`DB ${bot.context.db.databaseName} is initialized`)
+  },
+  botHandler: app
+}
+
+
+function createReportMessage({moonDay}) {
+  if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это'
+
+  const {dayNumber, dayStart, dayEnd} = moonDay;
+  let reportMessage =
+    `Текущий лунный день: *${dayNumber}*
+День начался: _${moment(dayStart).format('ddd D MMM HH:mm:ss')}_
+День завершится: _${moment(dayEnd).format('ddd D MMM HH:mm:ss')}_
+Начало следующего через: _${moment(dayEnd).fromNow()}_
+`
+  return reportMessage
+}
