@@ -1,11 +1,11 @@
 {
-  "name": "spaceAndTime_Bot",
+  "name": "astral_bot",
   "version": "1.0.0",
   "main": "index.js",
   "author": "vitaly.kiktiov@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "dot-env": "^0.0.1",
+    "dotenv": "^6.1.0",
     "lodash": "^4.17.11",
     "micro-bot": "^2.5.0",
     "moment": "^2.22.2",
