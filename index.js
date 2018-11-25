@@ -21,11 +21,17 @@ app.start((ctx) => ctx.reply(
   )
 );
 app.help((ctx) => ctx.reply(
-  'Пришли мне свою локацию и я скажу тебе какой в этой точке пространства сейчас лунный день', sendLocationKeyboard
+  'Пришли мне свою локацию и я скажу тебе какой в этой точке пространства сейчас лунный день\n' +
+  'Если не удаётся отправить локацию, проверь в настройках, что у телеграм есть доступ к gps',
+  sendLocationKeyboard
   )
 );
 app.command('location', async ctx => {
-  return ctx.reply('Пришли мне свои координаты и я рассчитаю для тебя астрологическую обстановку', sendLocationKeyboard)
+  return ctx.reply(
+    'Пришли мне свои координаты и я рассчитаю для тебя астрологическую обстановку.\n' +
+    'Если не удаётся отправить локацию, проверь в настройках, что у телеграм есть доступ к gps',
+    sendLocationKeyboard
+  )
 })
 
 app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
@@ -54,7 +60,7 @@ app.on('location', async ctx => {
       {chatId: ctx.message.chat.id},
       {$set: {chatId: ctx.message.chat.id, coordinates: [latitude, longitude]}},
       {upsert: true}
-    )
+    );
 
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${longitude}\nШирота: ${latitude}\n`)
 
@@ -62,7 +68,7 @@ app.on('location', async ctx => {
     const reportMessage = createReportMessage({moonDay})
     return ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (err) {
-    console.error(err)
+    console.error(err);
     ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу', removeKb)
   }
 })
