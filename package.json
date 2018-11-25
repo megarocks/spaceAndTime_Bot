@@ -5,12 +5,16 @@
   "author": "vitaly.kiktiov@gmail.com",
   "license": "MIT",
   "dependencies": {
+    "dot-env": "^0.0.1",
     "lodash": "^4.17.11",
     "micro-bot": "^2.5.0",
     "moment": "^2.22.2",
+    "mongodb": "^3.1.10",
+    "nodemon": "^1.18.6",
     "suncalc": "^1.8.0"
   },
   "scripts": {
-    "start": "micro-bot -t ***REMOVED*** index.js"
+    "start": "micro-bot",
+    "dev": "nodemon --exec \"micro-bot -e .env.local\""
   }
 }
