@@ -14,7 +14,6 @@
     "suncalc": "^1.8.0"
   },
   "scripts": {
-    "start": "micro-bot",
-    "dev": "nodemon --exec \"micro-bot -e .env.local\""
+    "dev": "nodemon --exec \"micro-bot -e .env.local \""
   }
 }
