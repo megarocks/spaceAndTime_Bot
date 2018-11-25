@@ -4,6 +4,7 @@ const {Composer} = require('micro-bot');
 const Telegraf = require('telegraf')
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
+const geoTz = require('geo-tz')
 
 const moonCalc = require('./moonCalc');
 
@@ -30,7 +31,8 @@ app.command('location', async ctx => {
 })
 
 app.on('location', async ctx => {
-  return ctx.reply(`Благодарю. Координаты: ${JSON.stringify(ctx.message.location)} приняты и сохранены. Буду держать тебя в курсе`, removeKb)
+  const { message: { location: { latitude, longitude } } } = ctx
+  return ctx.reply(`Благодарю. Координаты: ${JSON.stringify({ latitude, longitude })} приняты и сохранены. Буду держать тебя в курсе`, removeKb)
 })
 
 // {
