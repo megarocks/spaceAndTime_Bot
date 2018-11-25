@@ -3,7 +3,7 @@ const moment = require('moment');
 const {Composer} = require('micro-bot');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
-const MongoClient = require('mongodb').MongoClient;
+const MongoClient = require('mongodb').MongoClient; //123
 
 const dbClient = new MongoClient(process.env.MONGODB_URI, {useNewUrlParser: true})
 
@@ -47,6 +47,8 @@ app.on('location', async ctx => {
   try {
     const {message: {location: {latitude, longitude}}} = ctx
     const chatsCollection = ctx.db.collection('chats')
+
+    if (!latitude || !longitude) return ctx.reply('Не могу определить координаты. Проверь службы геолокации')
 
     await chatsCollection.updateOne(
       {chatId: ctx.message.chat.id},
