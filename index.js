@@ -1,5 +1,4 @@
 require('dotenv');
-const moment = require('moment');
 const {DateTime} = require('luxon');
 const {Composer} = require('micro-bot');
 const Extra = require('telegraf/extra');
