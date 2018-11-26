@@ -1,5 +1,6 @@
 require('dotenv');
 const moment = require('moment');
+const {DateTime} = require('luxon');
 const {Composer} = require('micro-bot');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
@@ -51,7 +52,7 @@ setLocationScene.on('location', async ctx => {
     await saveCoordinatesToChatsCollection(ctx, [ lat, lng ])
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`)
 
-    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon: lng});
+    const moonDay = moonCalc.calculateMoonDayFor(new Date(), [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (err) {
@@ -74,7 +75,7 @@ setLocationScene.on('text', async ctx => {
     await saveCoordinatesToChatsCollection(ctx, [ lat, lng ]);
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
 
-    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon: lng});
+    const moonDay = moonCalc.calculateMoonDayFor(new Date(), [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
     leave()
@@ -96,8 +97,8 @@ app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
     const chat = await db.collection('chats').findOne({chatId: message.chat.id})
     if (!chat) return reply('Пришли мне свои координаты, потом выполни эту команду снова', sendLocationKeyboard)
 
-    const {coordinates: [lat, lon]} = chat;
-    const moonDay = moonCalc.calculateMoonDayFor(moment(), {lat, lon});
+    const {coordinates: [lat, lng]} = chat;
+    const moonDay = moonCalc.calculateMoonDayFor(new Date(), [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     return replyWithMarkdown(reportMessage)
   } catch (err) {
@@ -119,13 +120,33 @@ function createReportMessage({moonDay}) {
   if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это'
 
   const {dayNumber, dayStart, dayEnd} = moonDay;
+  let leftHours = Math.floor(dayEnd.diff(DateTime.local(), 'hours').hours)
+  let leftHoursMessage = leftHours ? `Через ${leftHours} ${getNoun(leftHours, 'час', 'часа', 'часов')}` : 'менее чем через час';
+
+
   let reportMessage =
     `Текущий лунный день: *${dayNumber}*
-День начался: _${moment(dayStart).format('ddd D MMM HH:mm:ss')}_
-День завершится: _${moment(dayEnd).format('ddd D MMM HH:mm:ss')}_
-Начало следующего через: _${moment(dayEnd).fromNow()}_
+День начался: _${dayStart.setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
+День завершится: _${dayEnd.setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
+Начало следующего: _${leftHoursMessage}_
 `
   return reportMessage
+}
+
+function getNoun(number, one, two, five) {
+  let n = Math.abs(number);
+  n %= 100;
+  if (n >= 5 && n <= 20) {
+    return five;
+  }
+  n %= 10;
+  if (n === 1) {
+    return one;
+  }
+  if (n >= 2 && n <= 4) {
+    return two;
+  }
+  return five;
 }
 
 async function saveCoordinatesToChatsCollection(ctx, coordinates) {
