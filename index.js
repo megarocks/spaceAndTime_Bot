@@ -129,8 +129,8 @@ function createReportMessage({moonDay, timeZone}) {
 
   let reportMessage =
     `Текущий лунный день: *${dayNumber}*
-День начался: _${dayStart.setZone(timeZone).toLocaleString(DateTime.DATETIME_SHORT)}_
-День завершится: _${dayEnd.setZone(timeZone).toLocaleString(DateTime.DATETIME_SHORT)}_
+День начался: _${dayStart.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
+День завершится: _${dayEnd.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
 Начало следующего: _${leftHoursMessage}_
 `
   return reportMessage
