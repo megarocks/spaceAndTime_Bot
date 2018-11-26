@@ -46,7 +46,7 @@ setLocationScene.on('location', async ctx => {
   try {
     const {message: {location: {latitude: lat, longitude: lng}}} = ctx
 
-    if (!latitude || !longitude)
+    if (!lat || !lng)
       return ctx.reply('Не могу определить координаты. Проверь службы геолокации')
 
     await saveCoordinatesToChatsCollection(ctx, [ lat, lng ])
@@ -101,7 +101,10 @@ app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
 
     const {coordinates: [lat, lng]} = chat;
     const [timeZone] = geoTz(lat, lng);
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.fromObject({zone: timeZone}).toJSDate(), [lat, lng]);
+    console.log('calculation for timezone: ', timeZone)
+    const targetDate = DateTime.fromObject({zone: timeZone}).toJSDate();
+    console.log('target date: ', targetDate)
+    const moonDay = moonCalc.calculateMoonDayFor(targetDate, [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     return replyWithMarkdown(reportMessage)
   } catch (err) {
