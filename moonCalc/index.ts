@@ -36,16 +36,16 @@ const getNewMoonDate = (params: {
 const getMoonRisesBetween = (params: {
     prevNewMoon: DateTime,
     nextNewMoon: DateTime,
-    coordinates: [number, number]
+    coordinates: { lat:number, lng:number}
 }): DateTime[] => {
-    const {prevNewMoon, nextNewMoon, coordinates: [lat, lng]} = params;
+    const {prevNewMoon, nextNewMoon, coordinates: {lat, lng}} = params;
     const moonRises = [];
 
     moonRises.push(prevNewMoon.toISO()); // we use exact new moon moment as moon moth boundary
 
     const hoursBetweenNewMoons = Math.floor(nextNewMoon.diff(prevNewMoon,'hours').hours);
     for (let i = 0; i <= hoursBetweenNewMoons; i++) {
-        const moonTimesAtSomeMomentOfMonth = getMoonTimes(prevNewMoon.plus({hours: i}).toJSDate(), lat, lng);
+        const moonTimesAtSomeMomentOfMonth = getMoonTimes(prevNewMoon.plus({hours: i}).toJSDate(), lat, lng, true);
         if (!moonTimesAtSomeMomentOfMonth.rise) continue;
 
         const moonRiseMoment = DateTime.fromJSDate(moonTimesAtSomeMomentOfMonth.rise);
@@ -74,7 +74,7 @@ const convertMoonRisesToDays = (moonRises: DateTime[]): MoonDay[] => {
 
 const calculateMoonDayFor = (
     date: Date,
-    coordinates: [number, number]
+    coordinates: { lat:number, lng: number}
 ): MoonDay => {
     validateInput({ date, coordinates });
 
@@ -83,7 +83,7 @@ const calculateMoonDayFor = (
     const prevNewMoon = getNewMoonDate({startDate: targetDate, shouldCalcPrevNewMoon: true});
     const nextNewMoon = getNewMoonDate({startDate: targetDate, });
 
-    const moonRisesAtSoughtMonth = getMoonRisesBetween({prevNewMoon, nextNewMoon, coordinates});
+    const moonRisesAtSoughtMonth = getMoonRisesBetween({prevNewMoon, nextNewMoon, coordinates });
 
     const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth);
 
@@ -94,8 +94,8 @@ function validateInput(params) {
     if (!params.date) throw new Error('invalid date')
     if (Object.prototype.toString.call(params.date) !== '[object Date]') throw new Error('invalid date')
     if (!params.coordinates) throw new Error('coordinates are required')
-    if (typeof params.coordinates[0] !== 'number') throw new Error('latitude should be a number')
-    if (typeof params.coordinates[1] !== 'number') throw new Error('longitude should be a number')
+    if (typeof params.coordinates.lat !== 'number') throw new Error('latitude should be a number')
+    if (typeof params.coordinates.lng !== 'number') throw new Error('longitude should be a number')
 
     return
 }

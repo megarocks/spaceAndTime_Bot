@@ -22,12 +22,12 @@ const getNewMoonDate = (params) => {
     return newMoon.moment;
 };
 const getMoonRisesBetween = (params) => {
-    const { prevNewMoon, nextNewMoon, coordinates: [lat, lng] } = params;
+    const { prevNewMoon, nextNewMoon, coordinates: { lat, lng } } = params;
     const moonRises = [];
     moonRises.push(prevNewMoon.toISO()); // we use exact new moon moment as moon moth boundary
     const hoursBetweenNewMoons = Math.floor(nextNewMoon.diff(prevNewMoon, 'hours').hours);
     for (let i = 0; i <= hoursBetweenNewMoons; i++) {
-        const moonTimesAtSomeMomentOfMonth = suncalc_1.getMoonTimes(prevNewMoon.plus({ hours: i }).toJSDate(), lat, lng);
+        const moonTimesAtSomeMomentOfMonth = suncalc_1.getMoonTimes(prevNewMoon.plus({ hours: i }).toJSDate(), lat, lng, true);
         if (!moonTimesAtSomeMomentOfMonth.rise)
             continue;
         const moonRiseMoment = luxon_1.DateTime.fromJSDate(moonTimesAtSomeMomentOfMonth.rise);
@@ -66,9 +66,9 @@ function validateInput(params) {
         throw new Error('invalid date');
     if (!params.coordinates)
         throw new Error('coordinates are required');
-    if (typeof params.coordinates[0] !== 'number')
+    if (typeof params.coordinates.lat !== 'number')
         throw new Error('latitude should be a number');
-    if (typeof params.coordinates[1] !== 'number')
+    if (typeof params.coordinates.lng !== 'number')
         throw new Error('longitude should be a number');
     return;
 }
