@@ -4,6 +4,7 @@ const {Composer} = require('micro-bot');
 const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const MongoClient = require('mongodb').MongoClient;
+const geoTz = require('geo-tz')
 
 const session = require('telegraf/session')
 const Stage = require('telegraf/stage')
@@ -51,7 +52,8 @@ setLocationScene.on('location', async ctx => {
     await saveCoordinatesToChatsCollection(ctx, [ lat, lng ])
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`)
 
-    const moonDay = moonCalc.calculateMoonDayFor(new Date(), [lat, lng]);
+    const [timeZone] = geoTz(lat, lng);
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.fromObject({zone: timeZone}).toJSDate(), [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (err) {
@@ -74,7 +76,8 @@ setLocationScene.on('text', async ctx => {
     await saveCoordinatesToChatsCollection(ctx, [ lat, lng ]);
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
 
-    const moonDay = moonCalc.calculateMoonDayFor(new Date(), [lat, lng]);
+    const [timeZone] = geoTz(lat, lng);
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.fromObject({zone: timeZone}).toJSDate(), [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
     leave()
@@ -97,7 +100,8 @@ app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
     if (!chat) return reply('Пришли мне свои координаты, потом выполни эту команду снова', sendLocationKeyboard)
 
     const {coordinates: [lat, lng]} = chat;
-    const moonDay = moonCalc.calculateMoonDayFor(new Date(), [lat, lng]);
+    const [timeZone] = geoTz(lat, lng);
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.fromObject({zone: timeZone}).toJSDate(), [lat, lng]);
     const reportMessage = createReportMessage({moonDay})
     return replyWithMarkdown(reportMessage)
   } catch (err) {

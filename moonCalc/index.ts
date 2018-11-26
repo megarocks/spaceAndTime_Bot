@@ -92,6 +92,7 @@ const calculateMoonDayFor = (
 
 function validateInput(params) {
     if (!params.date) throw new Error('invalid date')
+    if (Object.prototype.toString.call(params.date) !== '[object Date]') throw new Error('invalid date')
     if (!params.coordinates) throw new Error('coordinates are required')
     if (typeof params.coordinates[0] !== 'number') throw new Error('latitude should be a number')
     if (typeof params.coordinates[1] !== 'number') throw new Error('longitude should be a number')
