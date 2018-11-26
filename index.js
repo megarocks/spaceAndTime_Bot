@@ -123,7 +123,7 @@ function createReportMessage({moonDay, timeZone}) {
   if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это'
 
   const {dayNumber, dayStart, dayEnd} = moonDay;
-  let leftHours = Math.floor(dayEnd.diff(DateTime.utc().setZone(timeZone), 'hours').hours)
+  let leftHours = Math.floor(dayEnd.setZone(timeZone).diff(DateTime.utc().setZone(timeZone), 'hours').hours)
   let leftHoursMessage = leftHours ? `Через ${leftHours} ${getNoun(leftHours, 'час', 'часа', 'часов')}` : 'менее чем через час';
 
 
