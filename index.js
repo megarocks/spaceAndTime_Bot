@@ -54,7 +54,7 @@ setLocationScene.on('location', async ctx => {
 
     const [timeZone] = geoTz(lat, lng);
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.fromObject({zone: timeZone}).toJSDate(), [lat, lng]);
-    const reportMessage = createReportMessage({moonDay})
+    const reportMessage = createReportMessage({moonDay, timeZone})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (err) {
     console.error(err);
@@ -78,7 +78,7 @@ setLocationScene.on('text', async ctx => {
 
     const [timeZone] = geoTz(lat, lng);
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.fromObject({zone: timeZone}).toJSDate(), [lat, lng]);
-    const reportMessage = createReportMessage({moonDay})
+    const reportMessage = createReportMessage({moonDay, timeZone})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
     leave()
   } catch (e) {
@@ -101,11 +101,8 @@ app.command('day', async ({db, message, reply, replyWithMarkdown}) => {
 
     const {coordinates: [lat, lng]} = chat;
     const [timeZone] = geoTz(lat, lng);
-    console.log('calculation for timezone: ', timeZone)
-    const targetDate = DateTime.fromObject({zone: timeZone}).toJSDate();
-    console.log('target date: ', targetDate)
-    const moonDay = moonCalc.calculateMoonDayFor(targetDate, [lat, lng]);
-    const reportMessage = createReportMessage({moonDay})
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().setZone(timeZone).toJSDate(), [lat, lng]);
+    const reportMessage = createReportMessage({moonDay, timeZone})
     return replyWithMarkdown(reportMessage)
   } catch (err) {
     console.error(err)
@@ -122,18 +119,18 @@ module.exports = {
   botHandler: app
 }
 
-function createReportMessage({moonDay}) {
+function createReportMessage({moonDay, timeZone}) {
   if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это'
 
   const {dayNumber, dayStart, dayEnd} = moonDay;
-  let leftHours = Math.floor(dayEnd.diff(DateTime.local(), 'hours').hours)
+  let leftHours = Math.floor(dayEnd.diff(DateTime.utc().setZone(timeZone), 'hours').hours)
   let leftHoursMessage = leftHours ? `Через ${leftHours} ${getNoun(leftHours, 'час', 'часа', 'часов')}` : 'менее чем через час';
 
 
   let reportMessage =
     `Текущий лунный день: *${dayNumber}*
-День начался: _${dayStart.setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
-День завершится: _${dayEnd.setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
+День начался: _${dayStart.setZone(timeZone).toLocaleString(DateTime.DATETIME_SHORT)}_
+День завершится: _${dayEnd.setZone(timeZone).toLocaleString(DateTime.DATETIME_SHORT)}_
 Начало следующего: _${leftHoursMessage}_
 `
   return reportMessage
