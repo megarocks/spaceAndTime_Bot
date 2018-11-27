@@ -1,12 +1,7 @@
 import {DateTime} from "luxon";
-import { getMoonTimes, getMoonIllumination } from "suncalc";
-import { minBy, uniq } from "lodash";
-
-interface MoonDay {
-    dayNumber: number,
-    dayStart: DateTime,
-    dayEnd: DateTime
-}
+import {getMoonTimes, getMoonIllumination} from "suncalc";
+import {minBy, uniq} from "lodash";
+import {MoonDay} from "./utils";
 
 const getNewMoonDate = (params: {
     startDate: DateTime,
@@ -29,6 +24,7 @@ const getNewMoonDate = (params: {
         });
     }
     const newMoon = minBy(moonIlluminationMoments, (i) => i.illuminationFraction);
+    if (!newMoon) throw new Error('can`t calculate new moon for: ' + startDate.toISO());
 
     return newMoon.moment
 };
@@ -36,14 +32,14 @@ const getNewMoonDate = (params: {
 const getMoonRisesBetween = (params: {
     prevNewMoon: DateTime,
     nextNewMoon: DateTime,
-    coordinates: { lat:number, lng:number}
+    coordinates: { lat: number, lng: number }
 }): DateTime[] => {
     const {prevNewMoon, nextNewMoon, coordinates: {lat, lng}} = params;
     const moonRises = [];
 
     moonRises.push(prevNewMoon.toISO()); // we use exact new moon moment as moon moth boundary
 
-    const hoursBetweenNewMoons = Math.floor(nextNewMoon.diff(prevNewMoon,'hours').hours);
+    const hoursBetweenNewMoons = Math.floor(nextNewMoon.diff(prevNewMoon, 'hours').hours);
     for (let i = 0; i <= hoursBetweenNewMoons; i++) {
         const moonTimesAtSomeMomentOfMonth = getMoonTimes(prevNewMoon.plus({hours: i}).toJSDate(), lat, lng, true);
         if (!moonTimesAtSomeMomentOfMonth.rise) continue;
@@ -60,7 +56,9 @@ const getMoonRisesBetween = (params: {
     return uniqMoonRises.map(ISODate => DateTime.fromISO(ISODate))
 };
 
-const convertMoonRisesToDays = (moonRises: DateTime[]): MoonDay[] => {
+const convertMoonRisesToDays = (
+    moonRises: DateTime[]
+): MoonDay[] => {
     const moonDays = [];
     for (let i = 0; i < moonRises.length - 1; i++) {
         moonDays.push({
@@ -72,34 +70,18 @@ const convertMoonRisesToDays = (moonRises: DateTime[]): MoonDay[] => {
     return moonDays
 };
 
-const calculateMoonDayFor = (
+export const calculateMoonDayFor = (
     date: Date,
-    coordinates: { lat:number, lng: number}
-): MoonDay => {
-    validateInput({ date, coordinates });
-
+    coordinates: { lat: number, lng: number }
+): MoonDay | undefined => {
     const targetDate = DateTime.fromJSDate(date);
 
     const prevNewMoon = getNewMoonDate({startDate: targetDate, shouldCalcPrevNewMoon: true});
-    const nextNewMoon = getNewMoonDate({startDate: targetDate, });
+    const nextNewMoon = getNewMoonDate({startDate: targetDate,});
 
-    const moonRisesAtSoughtMonth = getMoonRisesBetween({prevNewMoon, nextNewMoon, coordinates });
+    const moonRisesAtSoughtMonth = getMoonRisesBetween({prevNewMoon, nextNewMoon, coordinates});
 
     const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth);
 
     return moonDays.find(d => targetDate >= d.dayStart && targetDate <= d.dayEnd);
-};
-
-function validateInput(params) {
-    if (!params.date) throw new Error('invalid date')
-    if (Object.prototype.toString.call(params.date) !== '[object Date]') throw new Error('invalid date')
-    if (!params.coordinates) throw new Error('coordinates are required')
-    if (typeof params.coordinates.lat !== 'number') throw new Error('latitude should be a number')
-    if (typeof params.coordinates.lng !== 'number') throw new Error('longitude should be a number')
-
-    return
-}
-
-module.exports = {
-    calculateMoonDayFor
 };
