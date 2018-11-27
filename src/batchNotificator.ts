@@ -20,6 +20,9 @@ async function main() {
         const messageSendingJobs: Promise<NotificationResult>[] = chats.map(sendingJob);
         const sendingResults: NotificationResult[] = await Promise.all(messageSendingJobs);
         const successFullSendingResults: NotificationResult[] = sendingResults.filter(sr => !!sr);
+
+        console.log(`${successFullSendingResults.length} notifications successfully sent`);
+
         const resultsSavingJobs = successFullSendingResults.map(databaseSavingJob);
         await Promise.all(resultsSavingJobs)
     } catch (e) {

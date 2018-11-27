@@ -30,6 +30,7 @@ function main() {
             const messageSendingJobs = chats.map(sendingJob);
             const sendingResults = yield Promise.all(messageSendingJobs);
             const successFullSendingResults = sendingResults.filter(sr => !!sr);
+            console.log(`${successFullSendingResults.length} notifications successfully sent`);
             const resultsSavingJobs = successFullSendingResults.map(databaseSavingJob);
             yield Promise.all(resultsSavingJobs);
         }
