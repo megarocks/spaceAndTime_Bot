@@ -6,6 +6,20 @@ export interface MoonDay {
     dayEnd: DateTime
 }
 
+export interface Chat {
+    chatId: number,
+    location: {
+        type: string,
+        coordinates: [number, number]
+    },
+    moonDayNotified: number
+}
+
+export interface NotificationResult {
+    chatId: number,
+    moonDayNumber: number
+}
+
 export function createReportMessage({moonDay, timeZone} : { moonDay: MoonDay, timeZone: string }): string {
     if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это';
 
