@@ -5,7 +5,6 @@ const Extra = require('telegraf/extra');
 const Markup = require('telegraf/markup');
 const MongoClient = require('mongodb').MongoClient;
 const geoTz = require('geo-tz');
-
 const session = require('telegraf/session');
 const Stage = require('telegraf/stage');
 const Scene = require('telegraf/scenes/base');
@@ -69,7 +68,7 @@ setLocationScene.on('text', async ctx => {
     const reportMessage = createReportMessage({moonDay, timeZone})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (e) {
-    console.error(err);
+    console.error(e);
     await ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу', removeKb)
   } finally {
     leave()

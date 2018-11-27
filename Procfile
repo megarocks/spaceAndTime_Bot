@@ -1,1 +1,1 @@
-web: micro-bot -p $PORT
+web: micro-bot dist/main.js -p $PORT
