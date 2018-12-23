@@ -1,7 +1,7 @@
 import {DateTime} from "luxon";
 import {getMoonTimes, getMoonIllumination} from "suncalc";
 import {minBy, uniq} from "lodash";
-import {MoonDay} from "./utils";
+import {MoonDay} from "./index";
 
 const getNewMoonDate = (params: {
     startDate: DateTime,

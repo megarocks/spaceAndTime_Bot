@@ -2,7 +2,6 @@ require('dotenv').config();
 
 import { DateTime } from 'luxon';
 import { Composer } from 'micro-bot';
-import { ContextMessageUpdate } from 'telegraf';
 import Extra from 'telegraf/extra';
 import Markup from 'telegraf/markup';
 import session from 'telegraf/session';
@@ -11,6 +10,7 @@ import Scene from 'telegraf/scenes/base';
 import {MongoClient} from 'mongodb'
 import geoTz from 'geo-tz';
 
+import { ContextMessageUpdateWithDb } from './index'
 import {createHelpMessage, createMoonMessage, createStartMessage} from "./utils";
 
 const { enter, leave } = Stage;
@@ -26,13 +26,13 @@ const app = new Composer();
 app.use(session());
 
 const setLocationScene = new Scene('location');
-setLocationScene.enter(async (ctx: ContextMessageUpdate) => {
+setLocationScene.enter(async (ctx: ContextMessageUpdateWithDb) => {
   return ctx.reply(
     'Напиши где ты находишься, или пришли мне свои координаты и я рассчитаю для тебя астрологическую обстановку.\n',
     sendLocationKeyboard
   )
 });
-setLocationScene.on('location', async (ctx: ContextMessageUpdate) => {
+setLocationScene.on('location', async (ctx: ContextMessageUpdateWithDb) => {
   try {
     const {message: {location: {latitude: lat, longitude: lng}}} = ctx;
 
@@ -53,7 +53,7 @@ setLocationScene.on('location', async (ctx: ContextMessageUpdate) => {
     leave()
   }
 });
-setLocationScene.on('text', async (ctx: ContextMessageUpdate) => {
+setLocationScene.on('text', async (ctx: ContextMessageUpdateWithDb) => {
   try {
     const { message: { text } } = ctx
     const geoCodingResponse = await googleMapsClient.geocode({ address: text }).asPromise();
@@ -81,15 +81,15 @@ setLocationScene.on('text', async (ctx: ContextMessageUpdate) => {
 const stage = new Stage([setLocationScene], { ttl: 10 });
 app.use(stage.middleware());
 
-app.start(async (ctx: ContextMessageUpdate) => {
+app.start(async (ctx: ContextMessageUpdateWithDb) => {
   await ctx.reply(createStartMessage());
 });
-app.help(async (ctx: ContextMessageUpdate) => {
+app.help(async (ctx: ContextMessageUpdateWithDb) => {
   await ctx.reply(createHelpMessage())
 });
 
 app.command('location', enter('location'));
-app.command('day', async (ctx: ContextMessageUpdate) => {
+app.command('day', async (ctx: ContextMessageUpdateWithDb) => {
   try {
     //@ts-ignore
     const chat = await ctx.db.collection('chats').findOne({chatId: ctx.message.chat.id});
@@ -109,7 +109,7 @@ app.command('day', async (ctx: ContextMessageUpdate) => {
 module.exports = {
   initialize: async app => {
     const mongoUri = process.env.MONGODB_URI || '';
-    const mongoClient = await MongoClient.connect(mongoUri, {useNewUrlParser: true});
+    const mongoClient: MongoClient = await MongoClient.connect(mongoUri, {useNewUrlParser: true});
     app.context.db = mongoClient.db();
     console.log(`DB ${app.context.db.databaseName} is initialized`);
   },
@@ -117,9 +117,8 @@ module.exports = {
 };
 
 
-async function saveCoordinatesToChatsCollection(ctx: ContextMessageUpdate, coordinates: {lat: number, lng: number}) {
+async function saveCoordinatesToChatsCollection(ctx: ContextMessageUpdateWithDb, coordinates: {lat: number, lng: number}) {
   const {lng, lat} = coordinates;
-  //@ts-ignore
   const chatsCollection = ctx.db.collection('chats')
   return chatsCollection.updateOne(
     {chatId: ctx.message.chat.id},

@@ -7,7 +7,8 @@ import request from 'request-promise-native';
 import SunCalc from "suncalc";
 
 import {calculateMoonDayFor} from './moonCalc';
-import {Chat, NotificationResult, MoonDay, createMoonMessage, createSolarMessage, getPercentRelation} from './utils'
+import {createMoonMessage, createSolarMessage, getPercentRelation} from './utils'
+import { Chat, NotificationResult, MoonDay } from './index'
 
 const mongoUri = process.env.MONGODB_URI || '';
 let db;

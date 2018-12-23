@@ -49,22 +49,6 @@ function createHelpMessage() {
         'Если не удаётся отправить локацию, проверь в настройках, что у телеграм есть доступ к gps';
 }
 exports.createHelpMessage = createHelpMessage;
-function getNoun(number, one, two, five) {
-    let n = Math.abs(number);
-    n %= 100;
-    if (n >= 5 && n <= 20) {
-        return five;
-    }
-    n %= 10;
-    if (n === 1) {
-        return one;
-    }
-    if (n >= 2 && n <= 4) {
-        return two;
-    }
-    return five;
-}
-exports.getNoun = getNoun;
 function getPercentRelation(values) {
     const hundredPercent = values.reduce((acc, val) => acc + val, 0);
     return values.map(value => value * 100 / hundredPercent);

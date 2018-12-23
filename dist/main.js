@@ -114,7 +114,6 @@ module.exports = {
 function saveCoordinatesToChatsCollection(ctx, coordinates) {
     return __awaiter(this, void 0, void 0, function* () {
         const { lng, lat } = coordinates;
-        //@ts-ignore
         const chatsCollection = ctx.db.collection('chats');
         return chatsCollection.updateOne({ chatId: ctx.message.chat.id }, { $set: { chatId: ctx.message.chat.id, location: { type: 'Point', coordinates: [lng, lat] } } }, { upsert: true });
     });
