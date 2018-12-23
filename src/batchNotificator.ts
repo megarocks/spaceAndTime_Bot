@@ -40,17 +40,17 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
     if (!timeZone) throw new Error(`no timezone for chat: ${chatId} and coordinates: ${lat} ${lng}`);
 
     const messagesArray: Array<string | undefined> = [];
-    const calculationDate = DateTime.utc(2019, 2, 2)
+    const calculationDate = DateTime.utc()
 
     //common message
     let commonMessage = `⏰ Рассчетное время: ${calculationDate.setZone(timeZone).toLocaleString(DateTime.DATETIME_MED)}\n`
-    commonMessage += `🌐 Временная зона: ${timeZone}`
+    commonMessage += `🌐 Временная зона: ${timeZone}\n`
 
     messagesArray.push(commonMessage)
 
     //moon message
     const moonDay = calculateMoonDayFor(calculationDate.toJSDate(), {lng, lat});
-    const moonRelatedMessage = getMoonRelatedMessage({
+    const moonRelatedMessage = getMoonNewsMessage({
       moonDay,
       chat,
       timeZone,
@@ -58,7 +58,7 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
     messagesArray.push(moonRelatedMessage);
 
     //solar message
-    const solarRelatedMessage = getSolarRelatedMessage({calculationDate, chat, timeZone})
+    const solarRelatedMessage = getSolarNewsMessage({calculationDate, chat, timeZone})
     messagesArray.push(solarRelatedMessage);
 
     //final message
@@ -82,15 +82,23 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
 
     //send results
     if (!response.ok) throw new Error(response.description);
-    const {dayNumber: moonDayNumber = undefined} = moonDay || {};
-    return {chatId, moonDayNumber, solarDate: calculationDate.toJSDate()}
+    const {dayNumber: moonDayNumber = null} = moonDay || {};
+
+    let notificationResult: NotificationResult = {
+      chatId
+    }
+
+    if (solarRelatedMessage) notificationResult.solarDateNotified = calculationDate.toJSDate()
+    if (moonRelatedMessage) notificationResult.moonDayNumber = moonDayNumber
+
+    return notificationResult
   } catch (e) {
     console.log('Error while sending message')
     console.error(e.message)
   }
 }
 
-function getMoonRelatedMessage(options: { moonDay: MoonDay | undefined, chat: Chat, timeZone: string }): string | undefined {
+function getMoonNewsMessage(options: { moonDay: MoonDay | undefined, chat: Chat, timeZone: string }): string | undefined {
   const {moonDay, chat, timeZone} = options
   if (!moonDay) {
     console.warn(`Moon day was not calculated for: ${chat.chatId} at ${new Date().toISOString()}`)
@@ -100,14 +108,28 @@ function getMoonRelatedMessage(options: { moonDay: MoonDay | undefined, chat: Ch
   return createReportMessage({moonDay, timeZone});
 }
 
-function getSolarRelatedMessage(options: { chat: Chat, calculationDate: DateTime, timeZone: string }): string | undefined {
-  const {chat: {location: {coordinates: [lng, lat]}}, calculationDate, timeZone} = options
+function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, timeZone: string }): string | undefined {
+  const {chat: {location: {coordinates: [lng, lat]}, solarDateNotified}, calculationDate, timeZone} = options
 
+  const chatSolarDateNotified = DateTime.fromJSDate(solarDateNotified)
+  console.log({
+    solarDateNotified,
+    chatSolarDateNotified: chatSolarDateNotified.toLocaleString(),
+    'sameDate': calculationDate.hasSame(chatSolarDateNotified, 'day')
+  })
+  if (calculationDate.hasSame(chatSolarDateNotified, 'day')) return; // calculation date should be other than solarDateNotified
 
   const sunTimesToday = SunCalc.getTimes(calculationDate.toJSDate(), lat, lng);
   const sunRiseToday = DateTime.fromJSDate(sunTimesToday.sunrise)
   const sunSetToday = DateTime.fromJSDate(sunTimesToday.sunset)
   const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes'])
+
+  console.log({
+    sunRiseToday: sunRiseToday.toISO(),
+    calculationDate: calculationDate.toISO(),
+    'lessThenSunRise': calculationDate < sunRiseToday
+  })
+  if (calculationDate < sunRiseToday) return // sunrise should be already there
 
   const sunTimesYesterday = SunCalc.getTimes(calculationDate.minus({days: 1}).toJSDate(), lat, lng);
   const sunSetYtd = DateTime.fromJSDate(sunTimesYesterday.sunset)
@@ -135,10 +157,7 @@ async function databaseSavingJob(data: NotificationResult) {
     return db
       .collection('chats')
       .updateOne({chatId: data.chatId}, {
-        $set: {
-          moonDayNotified: data.moonDayNumber,
-          solarDateNotified: data.solarDate
-        }
+        $set: data
       })
   } catch (e) {
     console.log(JSON.stringify(data) + ' failed to save to DB');

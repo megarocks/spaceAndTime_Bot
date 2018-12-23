@@ -1,18 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const luxon_1 = require("luxon");
+const d3_scale_1 = require("d3-scale");
 function createReportMessage({ moonDay, timeZone }) {
     if (!moonDay)
         return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это';
     const { dayNumber, dayStart, dayEnd } = moonDay;
-    let leftHours = Math.floor(dayEnd.setZone(timeZone).diff(luxon_1.DateTime.utc().setZone(timeZone), 'hours').hours);
-    let leftHoursMessage = leftHours ? `Через ${leftHours} ${getNoun(leftHours, 'час', 'часа', 'часов')}` : 'менее чем через час';
-    let reportMessage = `Текущий лунный день: *${dayNumber}*
-День начался: _${dayStart.setZone(timeZone).setLocale('ru').toLocaleString(luxon_1.DateTime.DATETIME_SHORT)}_
-День завершится: _${dayEnd.setZone(timeZone).setLocale('ru').toLocaleString(luxon_1.DateTime.DATETIME_SHORT)}_
-Начало следующего: _${leftHoursMessage}_
+    const getMoonPhaseEmojiAndLabel = dayNumber => {
+        const scale = d3_scale_1.scaleQuantize().range([
+            { symbol: '🌚', label: 'новолуние' },
+            { symbol: '🌒', label: 'первая фаза' },
+            { symbol: '🌓', label: 'первая четверть' },
+            { symbol: '🌔', label: 'вторая фаза' },
+            { symbol: '🌕', label: 'полнолуние' },
+            { symbol: '🌖', label: 'третья фаза' },
+            { symbol: '🌗', label: 'третья четверть' },
+            { symbol: '🌘', label: 'четвёртая фаза' },
+        ]).domain([1, 29]);
+        console.log(scale(1));
+        console.log(scale(2));
+        console.log(scale(12));
+        console.log(scale(15));
+        console.log(scale(29));
+        return scale(dayNumber);
+    };
+    const { symbol, label } = getMoonPhaseEmojiAndLabel(dayNumber);
+    return `🌝 Луна:
+${symbol} день: *${dayNumber}* - ${label}
+🔁 начало: _${dayStart.setZone(timeZone).setLocale('ru').toLocaleString(luxon_1.DateTime.DATETIME_SHORT)}_
+🔁 завершение: _${dayEnd.setZone(timeZone).setLocale('ru').toLocaleString(luxon_1.DateTime.DATETIME_SHORT)}_
 `;
-    return reportMessage;
 }
 exports.createReportMessage = createReportMessage;
 function createStartMessage() {

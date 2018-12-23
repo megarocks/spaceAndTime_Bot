@@ -51,21 +51,21 @@ function sendingJob(chat) {
             if (!timeZone)
                 throw new Error(`no timezone for chat: ${chatId} and coordinates: ${lat} ${lng}`);
             const messagesArray = [];
-            const calculationDate = luxon_1.DateTime.utc(2019, 2, 2);
+            const calculationDate = luxon_1.DateTime.utc();
             //common message
             let commonMessage = `⏰ Рассчетное время: ${calculationDate.setZone(timeZone).toLocaleString(luxon_1.DateTime.DATETIME_MED)}\n`;
-            commonMessage += `🌐 Временная зона: ${timeZone}`;
+            commonMessage += `🌐 Временная зона: ${timeZone}\n`;
             messagesArray.push(commonMessage);
             //moon message
             const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate.toJSDate(), { lng, lat });
-            const moonRelatedMessage = getMoonRelatedMessage({
+            const moonRelatedMessage = getMoonNewsMessage({
                 moonDay,
                 chat,
                 timeZone,
             });
             messagesArray.push(moonRelatedMessage);
             //solar message
-            const solarRelatedMessage = getSolarRelatedMessage({ calculationDate, chat, timeZone });
+            const solarRelatedMessage = getSolarNewsMessage({ calculationDate, chat, timeZone });
             messagesArray.push(solarRelatedMessage);
             //final message
             const meaningFullMessages = messagesArray.filter(m => m);
@@ -88,8 +88,15 @@ function sendingJob(chat) {
             //send results
             if (!response.ok)
                 throw new Error(response.description);
-            const { dayNumber: moonDayNumber = undefined } = moonDay || {};
-            return { chatId, moonDayNumber, solarDate: calculationDate.toJSDate() };
+            const { dayNumber: moonDayNumber = null } = moonDay || {};
+            let notificationResult = {
+                chatId
+            };
+            if (solarRelatedMessage)
+                notificationResult.solarDateNotified = calculationDate.toJSDate();
+            if (moonRelatedMessage)
+                notificationResult.moonDayNumber = moonDayNumber;
+            return notificationResult;
         }
         catch (e) {
             console.log('Error while sending message');
@@ -97,7 +104,7 @@ function sendingJob(chat) {
         }
     });
 }
-function getMoonRelatedMessage(options) {
+function getMoonNewsMessage(options) {
     const { moonDay, chat, timeZone } = options;
     if (!moonDay) {
         console.warn(`Moon day was not calculated for: ${chat.chatId} at ${new Date().toISOString()}`);
@@ -107,12 +114,27 @@ function getMoonRelatedMessage(options) {
         return; // means already notified
     return utils_1.createReportMessage({ moonDay, timeZone });
 }
-function getSolarRelatedMessage(options) {
-    const { chat: { location: { coordinates: [lng, lat] } }, calculationDate, timeZone } = options;
+function getSolarNewsMessage(options) {
+    const { chat: { location: { coordinates: [lng, lat] }, solarDateNotified }, calculationDate, timeZone } = options;
+    const chatSolarDateNotified = luxon_1.DateTime.fromJSDate(solarDateNotified);
+    console.log({
+        solarDateNotified,
+        chatSolarDateNotified: chatSolarDateNotified.toLocaleString(),
+        'sameDate': calculationDate.hasSame(chatSolarDateNotified, 'day')
+    });
+    if (calculationDate.hasSame(chatSolarDateNotified, 'day'))
+        return; // calculation date should be other than solarDateNotified
     const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), lat, lng);
     const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
     const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);
     const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes']);
+    console.log({
+        sunRiseToday: sunRiseToday.toISO(),
+        calculationDate: calculationDate.toISO(),
+        'lessThenSunRise': calculationDate < sunRiseToday
+    });
+    if (calculationDate < sunRiseToday)
+        return; // sunrise should be already there
     const sunTimesYesterday = suncalc_1.default.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng);
     const sunSetYtd = luxon_1.DateTime.fromJSDate(sunTimesYesterday.sunset);
     const nightLength = sunRiseToday.diff(sunSetYtd, ['hours', 'minutes']);
@@ -136,10 +158,7 @@ function databaseSavingJob(data) {
             return db
                 .collection('chats')
                 .updateOne({ chatId: data.chatId }, {
-                $set: {
-                    moonDayNotified: data.moonDayNumber,
-                    solarDateNotified: data.solarDate
-                }
+                $set: data
             });
         }
         catch (e) {

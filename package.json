@@ -10,6 +10,7 @@
     "@types/luxon": "^1.4.1",
     "@types/mongodb": "^3.1.14",
     "@types/suncalc": "^1.8.0",
+    "d3": "^5.7.0",
     "dotenv": "^6.1.0",
     "full-icu": "^1.2.1",
     "geo-tz": "^5.0.0",
@@ -30,4 +31,3 @@
     "send-notifications": "node dist/batchNotificator.js"
   }
 }
-

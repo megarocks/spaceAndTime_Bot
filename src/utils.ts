@@ -1,4 +1,5 @@
 import {DateTime} from 'luxon';
+import {scaleQuantize} from 'd3-scale'
 
 export interface MoonDay {
   dayNumber: number,
@@ -12,31 +13,49 @@ export interface Chat {
     type: string,
     coordinates: [number, number]
   },
-  moonDayNotified: number,
-  solarDateNotified: Date
+  moonDayNotified?: number,
+  solarDateNotified?: Date
 }
 
 export interface NotificationResult {
   chatId: number,
-  moonDayNumber: number | undefined,
-  solarDate: Date
+  moonDayNumber?: number,
+  solarDateNotified?: Date
 }
 
 export function createReportMessage({moonDay, timeZone}: { moonDay: MoonDay, timeZone: string }): string {
   if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это';
 
   const {dayNumber, dayStart, dayEnd} = moonDay;
-  let leftHours = Math.floor(dayEnd.setZone(timeZone).diff(DateTime.utc().setZone(timeZone), 'hours').hours)
-  let leftHoursMessage = leftHours ? `Через ${leftHours} ${getNoun(leftHours, 'час', 'часа', 'часов')}` : 'менее чем через час';
 
+  const getMoonPhaseEmojiAndLabel = dayNumber => {
+    const scale = scaleQuantize().range([
+      {symbol: '🌚', label: 'новолуние'},
+      {symbol: '🌒', label: 'первая фаза'},
+      {symbol: '🌓', label: 'первая четверть'},
+      {symbol: '🌔', label: 'вторая фаза'},
+      {symbol: '🌕', label: 'полнолуние'},
+      {symbol: '🌖', label: 'третья фаза'},
+      {symbol: '🌗', label: 'третья четверть'},
+      {symbol: '🌘', label: 'четвёртая фаза'},
+    ]).domain([1, 29])
 
-  let reportMessage =
-    `Текущий лунный день: *${dayNumber}*
-День начался: _${dayStart.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
-День завершится: _${dayEnd.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
-Начало следующего: _${leftHoursMessage}_
+    console.log(scale(1))
+    console.log(scale(2))
+    console.log(scale(12))
+    console.log(scale(15))
+    console.log(scale(29))
+
+    return scale(dayNumber)
+  }
+
+  const {symbol, label} = getMoonPhaseEmojiAndLabel(dayNumber)
+
+  return `🌝 Луна:
+${ symbol } день: *${dayNumber}* - ${label}
+🔁 начало: _${dayStart.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
+🔁 завершение: _${dayEnd.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}_
 `
-  return reportMessage
 }
 
 export function createStartMessage(): string {
