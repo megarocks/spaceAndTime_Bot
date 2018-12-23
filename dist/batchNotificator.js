@@ -60,7 +60,7 @@ function sendingJob(chat) {
             const solarRelatedMessage = getSolarNewsMessage({ calculationDate, chat, timeZone });
             messagesArray.push(solarRelatedMessage);
             //moon message
-            const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate.toJSDate(), { lng, lat });
+            const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate, { lng, lat });
             const moonRelatedMessage = getMoonNewsMessage({
                 moonDay,
                 chat,
@@ -132,11 +132,7 @@ function getSolarNewsMessage(options) {
         dayLength.as('milliseconds'),
         nightLength.as('milliseconds')
     ]);
-    return `☀️ Солнце:
-🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
-🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
-🏙️ дня:\t ${dayPercent.toFixed(1)} %
-🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`;
+    return utils_1.createSolarMessage({ sunRiseToday, sunSetToday, nightPercent, dayPercent, timeZone });
 }
 function databaseSavingJob(data) {
     return __awaiter(this, void 0, void 0, function* () {

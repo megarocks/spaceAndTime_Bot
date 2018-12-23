@@ -7,7 +7,7 @@ import request from 'request-promise-native';
 import SunCalc from "suncalc";
 
 import {calculateMoonDayFor} from './moonCalc';
-import {Chat, NotificationResult, MoonDay, createMoonMessage, getPercentRelation} from './utils'
+import {Chat, NotificationResult, MoonDay, createMoonMessage, createSolarMessage, getPercentRelation} from './utils'
 
 const mongoUri = process.env.MONGODB_URI || '';
 let db;
@@ -53,7 +53,7 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
     messagesArray.push(solarRelatedMessage);
 
     //moon message
-    const moonDay = calculateMoonDayFor(calculationDate.toJSDate(), {lng, lat});
+    const moonDay = calculateMoonDayFor(calculationDate, {lng, lat});
     const moonRelatedMessage = getMoonNewsMessage({
       moonDay,
       chat,
@@ -130,11 +130,7 @@ function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, t
     nightLength.as('milliseconds')
   ])
 
-  return `☀️ Солнце:
-🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
-🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
-🏙️ дня:\t ${dayPercent.toFixed(1)} %
-🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`
+  return createSolarMessage({ sunRiseToday, sunSetToday, nightPercent, dayPercent, timeZone })
 }
 
 async function databaseSavingJob(data: NotificationResult) {

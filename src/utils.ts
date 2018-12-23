@@ -52,6 +52,21 @@ ${ symbol } день: *${dayNumber}* - ${label}
 `
 }
 
+export function createSolarMessage({sunRiseToday, sunSetToday, dayPercent, nightPercent, timeZone} : {
+  sunRiseToday: DateTime,
+  sunSetToday: DateTime,
+  dayPercent: number,
+  nightPercent: number,
+  timeZone: string
+}): string {
+
+  return `☀️ Солнце:
+🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
+🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
+🏙️ дня:\t ${dayPercent.toFixed(1)} %
+🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`
+}
+
 export function createStartMessage(): string {
   return `Привет
 Буду оповещать тебя о начале нового лунного дня и месяца, фазах луны, и других натуральных циклах нашей планеты

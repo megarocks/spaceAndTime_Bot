@@ -43,7 +43,7 @@ setLocationScene.on('location', async (ctx: ContextMessageUpdate) => {
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`);
 
     const [timeZone] = geoTz(lat, lng);
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().toJSDate(), {lat, lng});
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), {lat, lng});
     const reportMessage = createMoonMessage({moonDay, timeZone});
     await ctx.replyWithMarkdown(reportMessage, removeKb);
   } catch (err) {
@@ -67,7 +67,7 @@ setLocationScene.on('text', async (ctx: ContextMessageUpdate) => {
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
 
     const [timeZone] = geoTz(lat, lng);
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().toJSDate(), {lat, lng});
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), {lat, lng});
     const reportMessage = createMoonMessage({moonDay, timeZone})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (e) {
@@ -97,7 +97,7 @@ app.command('day', async (ctx: ContextMessageUpdate) => {
 
     const { location: {coordinates: [lng, lat]} } = chat;
     const [timeZone] = geoTz(lat, lng);
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().toJSDate(), {lat, lng});
+    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), {lat, lng});
     const reportMessage = createMoonMessage({moonDay, timeZone})
     return ctx.replyWithMarkdown(reportMessage)
   } catch (err) {

@@ -71,17 +71,15 @@ const convertMoonRisesToDays = (
 };
 
 export const calculateMoonDayFor = (
-    date: Date,
+    date: DateTime,
     coordinates: { lat: number, lng: number }
 ): MoonDay | undefined => {
-    const targetDate = DateTime.fromJSDate(date);
-
-    const prevNewMoon = getNewMoonDate({startDate: targetDate, shouldCalcPrevNewMoon: true});
-    const nextNewMoon = getNewMoonDate({startDate: targetDate,});
+    const prevNewMoon = getNewMoonDate({startDate: date, shouldCalcPrevNewMoon: true});
+    const nextNewMoon = getNewMoonDate({startDate: date});
 
     const moonRisesAtSoughtMonth = getMoonRisesBetween({prevNewMoon, nextNewMoon, coordinates});
 
     const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth);
 
-    return moonDays.find(d => targetDate >= d.dayStart && targetDate <= d.dayEnd);
+    return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd);
 };

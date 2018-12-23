@@ -53,10 +53,9 @@ const convertMoonRisesToDays = (moonRises) => {
     return moonDays;
 };
 exports.calculateMoonDayFor = (date, coordinates) => {
-    const targetDate = luxon_1.DateTime.fromJSDate(date);
-    const prevNewMoon = getNewMoonDate({ startDate: targetDate, shouldCalcPrevNewMoon: true });
-    const nextNewMoon = getNewMoonDate({ startDate: targetDate, });
+    const prevNewMoon = getNewMoonDate({ startDate: date, shouldCalcPrevNewMoon: true });
+    const nextNewMoon = getNewMoonDate({ startDate: date });
     const moonRisesAtSoughtMonth = getMoonRisesBetween({ prevNewMoon, nextNewMoon, coordinates });
     const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth);
-    return moonDays.find(d => targetDate >= d.dayStart && targetDate <= d.dayEnd);
+    return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd);
 };

@@ -27,6 +27,14 @@ ${symbol} день: *${dayNumber}* - ${label}
 `;
 }
 exports.createMoonMessage = createMoonMessage;
+function createSolarMessage({ sunRiseToday, sunSetToday, dayPercent, nightPercent, timeZone }) {
+    return `☀️ Солнце:
+🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
+🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
+🏙️ дня:\t ${dayPercent.toFixed(1)} %
+🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`;
+}
+exports.createSolarMessage = createSolarMessage;
 function createStartMessage() {
     return `Привет
 Буду оповещать тебя о начале нового лунного дня и месяца, фазах луны, и других натуральных циклах нашей планеты
