@@ -57,3 +57,8 @@ function getNoun(number, one, two, five) {
     return five;
 }
 exports.getNoun = getNoun;
+function getPercentRelation(values) {
+    const hundredPercent = values.reduce((acc, val) => acc + val, 0);
+    return values.map(value => value * 100 / hundredPercent);
+}
+exports.getPercentRelation = getPercentRelation;

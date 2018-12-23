@@ -7,7 +7,7 @@ import request from 'request-promise-native';
 import SunCalc from "suncalc";
 
 import {calculateMoonDayFor} from './moonCalc';
-import {Chat, NotificationResult, MoonDay, createReportMessage, getNoun} from './utils'
+import {Chat, NotificationResult, MoonDay, createReportMessage, getPercentRelation} from './utils'
 
 const mongoUri = process.env.MONGODB_URI || '';
 let db;
@@ -135,11 +135,6 @@ function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, t
 🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
 🏙️ дня:\t ${dayPercent.toFixed(1)} %
 🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`
-}
-
-function getPercentRelation(values: number[]): number[] {
-  const hundredPercent = values.reduce((acc, val) => acc + val, 0)
-  return values.map(value => value * 100 / hundredPercent)
 }
 
 async function databaseSavingJob(data: NotificationResult) {

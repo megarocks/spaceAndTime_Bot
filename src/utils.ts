@@ -81,3 +81,8 @@ export function getNoun(number: number, one: string, two: string, five: string):
   }
   return five;
 }
+
+export function getPercentRelation(values: number[]): number[] {
+  const hundredPercent = values.reduce((acc, val) => acc + val, 0)
+  return values.map(value => value * 100 / hundredPercent)
+}

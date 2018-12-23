@@ -128,7 +128,7 @@ function getSolarNewsMessage(options) {
     const sunTimesYesterday = suncalc_1.default.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng);
     const sunSetYtd = luxon_1.DateTime.fromJSDate(sunTimesYesterday.sunset);
     const nightLength = sunRiseToday.diff(sunSetYtd, ['hours', 'minutes']);
-    const [dayPercent, nightPercent] = getPercentRelation([
+    const [dayPercent, nightPercent] = utils_1.getPercentRelation([
         dayLength.as('milliseconds'),
         nightLength.as('milliseconds')
     ]);
@@ -137,10 +137,6 @@ function getSolarNewsMessage(options) {
 🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
 🏙️ дня:\t ${dayPercent.toFixed(1)} %
 🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`;
-}
-function getPercentRelation(values) {
-    const hundredPercent = values.reduce((acc, val) => acc + val, 0);
-    return values.map(value => value * 100 / hundredPercent);
 }
 function databaseSavingJob(data) {
     return __awaiter(this, void 0, void 0, function* () {
