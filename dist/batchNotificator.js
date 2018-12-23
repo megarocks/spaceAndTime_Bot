@@ -51,9 +51,13 @@ function sendingJob(chat) {
             if (!timeZone)
                 throw new Error(`no timezone for chat: ${chatId} and coordinates: ${lat} ${lng}`);
             const messagesArray = [];
-            const calculationDate = luxon_1.DateTime.utc().toJSDate();
+            const calculationDate = luxon_1.DateTime.utc(2019, 2, 2);
+            //common message
+            let commonMessage = `⏰ Рассчетное время: ${calculationDate.setZone(timeZone).toLocaleString(luxon_1.DateTime.DATETIME_MED)}\n`;
+            commonMessage += `🌐 Временная зона: ${timeZone}`;
+            messagesArray.push(commonMessage);
             //moon message
-            const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate, { lng, lat });
+            const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate.toJSDate(), { lng, lat });
             const moonRelatedMessage = getMoonRelatedMessage({
                 moonDay,
                 chat,
@@ -65,9 +69,8 @@ function sendingJob(chat) {
             messagesArray.push(solarRelatedMessage);
             //final message
             const meaningFullMessages = messagesArray.filter(m => m);
-            if (!meaningFullMessages.length)
-                return;
-            console.log(meaningFullMessages);
+            if (meaningFullMessages.length < 2)
+                return; // if no messages or only common message - no sense to send
             const reportMessage = meaningFullMessages.join('\n');
             //send request
             const requestOptions = {
@@ -86,7 +89,7 @@ function sendingJob(chat) {
             if (!response.ok)
                 throw new Error(response.description);
             const { dayNumber: moonDayNumber = undefined } = moonDay || {};
-            return { chatId, moonDayNumber, solarDate: calculationDate };
+            return { chatId, moonDayNumber, solarDate: calculationDate.toJSDate() };
         }
         catch (e) {
             console.log('Error while sending message');
@@ -105,32 +108,27 @@ function getMoonRelatedMessage(options) {
     return utils_1.createReportMessage({ moonDay, timeZone });
 }
 function getSolarRelatedMessage(options) {
-    const { chat, calculationDate, timeZone } = options;
-    const testDate = luxon_1.DateTime.utc(2019, 3, 20, 15);
-    const sunTimesToday = suncalc_1.default.getTimes(testDate.toJSDate(), chat.location.coordinates[1], chat.location.coordinates[0]);
+    const { chat: { location: { coordinates: [lng, lat] } }, calculationDate, timeZone } = options;
+    const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), lat, lng);
     const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
     const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);
     const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes']);
-    const sunTimesYesterday = suncalc_1.default.getTimes(testDate.minus({ days: 1 }).toJSDate(), chat.location.coordinates[1], chat.location.coordinates[0]);
+    const sunTimesYesterday = suncalc_1.default.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng);
     const sunSetYtd = luxon_1.DateTime.fromJSDate(sunTimesYesterday.sunset);
     const nightLength = sunRiseToday.diff(sunSetYtd, ['hours', 'minutes']);
-    const totalPcntValue = nightLength.as('milliseconds') + dayLength.as('milliseconds');
-    const dayPcnt = (dayLength.as('milliseconds') / totalPcntValue) * 100;
-    const nightPcnt = (nightLength.as('milliseconds') / totalPcntValue) * 100;
-    console.log({
-        calculationDate: testDate.setZone(timeZone).toISO(),
-        rise: sunRiseToday.setZone(timeZone).toISO(),
-        set: sunSetToday.setZone(timeZone).toISO(),
-        dayLength: dayLength.toObject(),
-        nightLength: nightLength.toObject(),
-        dayPcnt, nightPcnt
-    });
-    return `Солнечная дата: ${testDate.setZone(timeZone).toLocaleString()}
-восход: ${sunRiseToday.setZone(timeZone).toLocaleString()}
-закат: ${sunSetToday.setZone(timeZone).toLocaleString()}
-дня: ${dayLength.hours} ${utils_1.getNoun(dayLength.hours, 'час', 'часа', 'часов')} ${Math.floor(dayLength.minutes)} ${utils_1.getNoun(Math.floor(dayLength.minutes), 'минута', 'минуты', 'минут')}
-ночи: ${nightLength.hours} ${utils_1.getNoun(nightLength.hours, 'час', 'часа', 'часов')} ${Math.floor(nightLength.minutes)} ${utils_1.getNoun(Math.floor(nightLength.minutes), 'минута', 'минуты', 'минут')}
-`;
+    const [dayPercent, nightPercent] = getPercentRelation([
+        dayLength.as('milliseconds'),
+        nightLength.as('milliseconds')
+    ]);
+    return `☀️ Солнце:
+🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
+🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
+🏙️ дня:\t ${dayPercent.toFixed(1)} %
+🌃 ночи:\t ${nightPercent.toFixed(1)} %`;
+}
+function getPercentRelation(values) {
+    const hundredPercent = values.reduce((acc, val) => acc + val, 0);
+    return values.map(value => value * 100 / hundredPercent);
 }
 function databaseSavingJob(data) {
     return __awaiter(this, void 0, void 0, function* () {
