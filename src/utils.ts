@@ -7,6 +7,7 @@ export function createMoonMessage({moonDay, timeZone}: { moonDay: MoonDay, timeZ
 
   const {dayNumber, dayStart, dayEnd} = moonDay;
 
+  // @ts-ignore
   const getMoonPhaseEmojiAndLabel = (dayNumber: number) : {symbol: string, label: string} => {
     const scale = scaleQuantize().range([
       {symbol: '🌚', label: 'новолуние'},
