@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const luxon_1 = require("luxon");
 const d3_scale_1 = require("d3-scale");
-function createReportMessage({ moonDay, timeZone }) {
+function createMoonMessage({ moonDay, timeZone }) {
     if (!moonDay)
         return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это';
     const { dayNumber, dayStart, dayEnd } = moonDay;
@@ -26,7 +26,7 @@ ${symbol} день: *${dayNumber}* - ${label}
 🔁 завершение: _${dayEnd.setZone(timeZone).setLocale('ru').toLocaleString(luxon_1.DateTime.DATETIME_SHORT)}_
 `;
 }
-exports.createReportMessage = createReportMessage;
+exports.createMoonMessage = createMoonMessage;
 function createStartMessage() {
     return `Привет
 Буду оповещать тебя о начале нового лунного дня и месяца, фазах луны, и других натуральных циклах нашей планеты

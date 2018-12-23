@@ -11,7 +11,7 @@ import Scene from 'telegraf/scenes/base';
 import {MongoClient} from 'mongodb'
 import geoTz from 'geo-tz';
 
-import {createHelpMessage, createReportMessage, createStartMessage} from "./utils";
+import {createHelpMessage, createMoonMessage, createStartMessage} from "./utils";
 
 const { enter, leave } = Stage;
 
@@ -44,7 +44,7 @@ setLocationScene.on('location', async (ctx: ContextMessageUpdate) => {
 
     const [timeZone] = geoTz(lat, lng);
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().toJSDate(), {lat, lng});
-    const reportMessage = createReportMessage({moonDay, timeZone});
+    const reportMessage = createMoonMessage({moonDay, timeZone});
     await ctx.replyWithMarkdown(reportMessage, removeKb);
   } catch (err) {
     console.error(err);
@@ -68,7 +68,7 @@ setLocationScene.on('text', async (ctx: ContextMessageUpdate) => {
 
     const [timeZone] = geoTz(lat, lng);
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().toJSDate(), {lat, lng});
-    const reportMessage = createReportMessage({moonDay, timeZone})
+    const reportMessage = createMoonMessage({moonDay, timeZone})
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (e) {
     console.error(e);
@@ -98,7 +98,7 @@ app.command('day', async (ctx: ContextMessageUpdate) => {
     const { location: {coordinates: [lng, lat]} } = chat;
     const [timeZone] = geoTz(lat, lng);
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc().toJSDate(), {lat, lng});
-    const reportMessage = createReportMessage({moonDay, timeZone})
+    const reportMessage = createMoonMessage({moonDay, timeZone})
     return ctx.replyWithMarkdown(reportMessage)
   } catch (err) {
     console.error(err)

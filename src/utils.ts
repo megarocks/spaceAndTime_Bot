@@ -23,7 +23,7 @@ export interface NotificationResult {
   solarDateNotified?: Date
 }
 
-export function createReportMessage({moonDay, timeZone}: { moonDay: MoonDay, timeZone: string }): string {
+export function createMoonMessage({moonDay, timeZone}: { moonDay: MoonDay, timeZone: string }): string {
   if (!moonDay) return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это';
 
   const {dayNumber, dayStart, dayEnd} = moonDay;

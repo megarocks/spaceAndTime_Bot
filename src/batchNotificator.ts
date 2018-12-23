@@ -7,7 +7,7 @@ import request from 'request-promise-native';
 import SunCalc from "suncalc";
 
 import {calculateMoonDayFor} from './moonCalc';
-import {Chat, NotificationResult, MoonDay, createReportMessage, getPercentRelation} from './utils'
+import {Chat, NotificationResult, MoonDay, createMoonMessage, getPercentRelation} from './utils'
 
 const mongoUri = process.env.MONGODB_URI || '';
 let db;
@@ -105,7 +105,7 @@ function getMoonNewsMessage(options: { moonDay: MoonDay | undefined, chat: Chat,
     return
   }
   if (chat.moonDayNotified === moonDay.dayNumber) return;  // means already notified
-  return createReportMessage({moonDay, timeZone});
+  return createMoonMessage({moonDay, timeZone});
 }
 
 function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, timeZone: string }): string | undefined {

@@ -112,7 +112,7 @@ function getMoonNewsMessage(options) {
     }
     if (chat.moonDayNotified === moonDay.dayNumber)
         return; // means already notified
-    return utils_1.createReportMessage({ moonDay, timeZone });
+    return utils_1.createMoonMessage({ moonDay, timeZone });
 }
 function getSolarNewsMessage(options) {
     const { chat: { location: { coordinates: [lng, lat] }, solarDateNotified }, calculationDate, timeZone } = options;

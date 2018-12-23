@@ -42,7 +42,7 @@ setLocationScene.on('location', (ctx) => __awaiter(this, void 0, void 0, functio
         yield ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`);
         const [timeZone] = geo_tz_1.default(lat, lng);
         const moonDay = moonCalc.calculateMoonDayFor(luxon_1.DateTime.utc().toJSDate(), { lat, lng });
-        const reportMessage = utils_1.createReportMessage({ moonDay, timeZone });
+        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone });
         yield ctx.replyWithMarkdown(reportMessage, removeKb);
     }
     catch (err) {
@@ -65,7 +65,7 @@ setLocationScene.on('text', (ctx) => __awaiter(this, void 0, void 0, function* (
         yield ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
         const [timeZone] = geo_tz_1.default(lat, lng);
         const moonDay = moonCalc.calculateMoonDayFor(luxon_1.DateTime.utc().toJSDate(), { lat, lng });
-        const reportMessage = utils_1.createReportMessage({ moonDay, timeZone });
+        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone });
         yield ctx.replyWithMarkdown(reportMessage, removeKb);
     }
     catch (e) {
@@ -94,7 +94,7 @@ app.command('day', (ctx) => __awaiter(this, void 0, void 0, function* () {
         const { location: { coordinates: [lng, lat] } } = chat;
         const [timeZone] = geo_tz_1.default(lat, lng);
         const moonDay = moonCalc.calculateMoonDayFor(luxon_1.DateTime.utc().toJSDate(), { lat, lng });
-        const reportMessage = utils_1.createReportMessage({ moonDay, timeZone });
+        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone });
         return ctx.replyWithMarkdown(reportMessage);
     }
     catch (err) {
