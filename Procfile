@@ -1,1 +1,1 @@
-web: micro-bot dist/main.js -p $PORT
+web: yarn run start:prod

@@ -27,7 +27,8 @@
   },
   "scripts": {
     "start": "nodemon --exec \"micro-bot dist/main.js -e .env \"",
+    "start:prod": "NODE_ICU_DATA=$(pwd)/node_modules/full-icu micro-bot dist/main.js -p $PORT",
     "build": "tsc --build",
-    "send-notifications": "node dist/batchNotificator.js"
+    "send-notifications": "NODE_ICU_DATA=$(pwd)/node_modules/full-icu node dist/batchNotificator.js"
   }
 }
