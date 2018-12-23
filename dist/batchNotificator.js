@@ -135,7 +135,12 @@ function databaseSavingJob(data) {
         try {
             return db
                 .collection('chats')
-                .updateOne({ chatId: data.chatId }, { $set: { moonDayNotified: data.moonDayNumber } });
+                .updateOne({ chatId: data.chatId }, {
+                $set: {
+                    moonDayNotified: data.moonDayNumber,
+                    solarDateNotified: data.solarDate
+                }
+            });
         }
         catch (e) {
             console.log(JSON.stringify(data) + ' failed to save to DB');
