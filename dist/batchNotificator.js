@@ -53,9 +53,12 @@ function sendingJob(chat) {
             const messagesArray = [];
             const calculationDate = luxon_1.DateTime.utc();
             //common message
-            let commonMessage = `⏰ Рассчетное время: ${calculationDate.setZone(timeZone).toLocaleString(luxon_1.DateTime.DATETIME_MED)}\n`;
-            commonMessage += `🌐 Временная зона: ${timeZone}\n`;
+            let commonMessage = `⏰ время: ${calculationDate.setZone(timeZone).setLocale('ru').toLocaleString(luxon_1.DateTime.DATETIME_SHORT)}\n`;
+            commonMessage += `🌐 часовой пояс: ${timeZone}\n`;
             messagesArray.push(commonMessage);
+            //solar message
+            const solarRelatedMessage = getSolarNewsMessage({ calculationDate, chat, timeZone });
+            messagesArray.push(solarRelatedMessage);
             //moon message
             const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate.toJSDate(), { lng, lat });
             const moonRelatedMessage = getMoonNewsMessage({
@@ -64,9 +67,6 @@ function sendingJob(chat) {
                 timeZone,
             });
             messagesArray.push(moonRelatedMessage);
-            //solar message
-            const solarRelatedMessage = getSolarNewsMessage({ calculationDate, chat, timeZone });
-            messagesArray.push(solarRelatedMessage);
             //final message
             const meaningFullMessages = messagesArray.filter(m => m);
             if (meaningFullMessages.length < 2)
@@ -95,7 +95,7 @@ function sendingJob(chat) {
             if (solarRelatedMessage)
                 notificationResult.solarDateNotified = calculationDate.toJSDate();
             if (moonRelatedMessage)
-                notificationResult.moonDayNumber = moonDayNumber;
+                notificationResult.moonDayNotified = moonDayNumber;
             return notificationResult;
         }
         catch (e) {
@@ -117,22 +117,12 @@ function getMoonNewsMessage(options) {
 function getSolarNewsMessage(options) {
     const { chat: { location: { coordinates: [lng, lat] }, solarDateNotified }, calculationDate, timeZone } = options;
     const chatSolarDateNotified = luxon_1.DateTime.fromJSDate(solarDateNotified);
-    console.log({
-        solarDateNotified,
-        chatSolarDateNotified: chatSolarDateNotified.toLocaleString(),
-        'sameDate': calculationDate.hasSame(chatSolarDateNotified, 'day')
-    });
     if (calculationDate.hasSame(chatSolarDateNotified, 'day'))
         return; // calculation date should be other than solarDateNotified
     const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), lat, lng);
     const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
     const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);
     const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes']);
-    console.log({
-        sunRiseToday: sunRiseToday.toISO(),
-        calculationDate: calculationDate.toISO(),
-        'lessThenSunRise': calculationDate < sunRiseToday
-    });
     if (calculationDate < sunRiseToday)
         return; // sunrise should be already there
     const sunTimesYesterday = suncalc_1.default.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng);
@@ -146,7 +136,7 @@ function getSolarNewsMessage(options) {
 🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
 🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
 🏙️ дня:\t ${dayPercent.toFixed(1)} %
-🌃 ночи:\t ${nightPercent.toFixed(1)} %`;
+🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`;
 }
 function getPercentRelation(values) {
     const hundredPercent = values.reduce((acc, val) => acc + val, 0);

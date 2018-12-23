@@ -19,7 +19,7 @@ export interface Chat {
 
 export interface NotificationResult {
   chatId: number,
-  moonDayNumber?: number,
+  moonDayNotified?: number,
   solarDateNotified?: Date
 }
 
@@ -39,12 +39,6 @@ export function createReportMessage({moonDay, timeZone}: { moonDay: MoonDay, tim
       {symbol: '🌗', label: 'третья четверть'},
       {symbol: '🌘', label: 'четвёртая фаза'},
     ]).domain([1, 29])
-
-    console.log(scale(1))
-    console.log(scale(2))
-    console.log(scale(12))
-    console.log(scale(15))
-    console.log(scale(29))
 
     return scale(dayNumber)
   }

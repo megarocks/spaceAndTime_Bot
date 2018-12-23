@@ -43,10 +43,14 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
     const calculationDate = DateTime.utc()
 
     //common message
-    let commonMessage = `⏰ Рассчетное время: ${calculationDate.setZone(timeZone).toLocaleString(DateTime.DATETIME_MED)}\n`
-    commonMessage += `🌐 Временная зона: ${timeZone}\n`
+    let commonMessage = `⏰ время: ${calculationDate.setZone(timeZone).setLocale('ru').toLocaleString(DateTime.DATETIME_SHORT)}\n`
+    commonMessage += `🌐 часовой пояс: ${timeZone}\n`
 
     messagesArray.push(commonMessage)
+
+    //solar message
+    const solarRelatedMessage = getSolarNewsMessage({calculationDate, chat, timeZone})
+    messagesArray.push(solarRelatedMessage);
 
     //moon message
     const moonDay = calculateMoonDayFor(calculationDate.toJSDate(), {lng, lat});
@@ -56,10 +60,6 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
       timeZone,
     });
     messagesArray.push(moonRelatedMessage);
-
-    //solar message
-    const solarRelatedMessage = getSolarNewsMessage({calculationDate, chat, timeZone})
-    messagesArray.push(solarRelatedMessage);
 
     //final message
     const meaningFullMessages = messagesArray.filter(m => m);
@@ -89,7 +89,7 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
     }
 
     if (solarRelatedMessage) notificationResult.solarDateNotified = calculationDate.toJSDate()
-    if (moonRelatedMessage) notificationResult.moonDayNumber = moonDayNumber
+    if (moonRelatedMessage) notificationResult.moonDayNotified = moonDayNumber
 
     return notificationResult
   } catch (e) {
@@ -112,11 +112,6 @@ function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, t
   const {chat: {location: {coordinates: [lng, lat]}, solarDateNotified}, calculationDate, timeZone} = options
 
   const chatSolarDateNotified = DateTime.fromJSDate(solarDateNotified)
-  console.log({
-    solarDateNotified,
-    chatSolarDateNotified: chatSolarDateNotified.toLocaleString(),
-    'sameDate': calculationDate.hasSame(chatSolarDateNotified, 'day')
-  })
   if (calculationDate.hasSame(chatSolarDateNotified, 'day')) return; // calculation date should be other than solarDateNotified
 
   const sunTimesToday = SunCalc.getTimes(calculationDate.toJSDate(), lat, lng);
@@ -124,11 +119,6 @@ function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, t
   const sunSetToday = DateTime.fromJSDate(sunTimesToday.sunset)
   const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes'])
 
-  console.log({
-    sunRiseToday: sunRiseToday.toISO(),
-    calculationDate: calculationDate.toISO(),
-    'lessThenSunRise': calculationDate < sunRiseToday
-  })
   if (calculationDate < sunRiseToday) return // sunrise should be already there
 
   const sunTimesYesterday = SunCalc.getTimes(calculationDate.minus({days: 1}).toJSDate(), lat, lng);
@@ -144,7 +134,7 @@ function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, t
 🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
 🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
 🏙️ дня:\t ${dayPercent.toFixed(1)} %
-🌃 ночи:\t ${nightPercent.toFixed(1)} %`
+🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`
 }
 
 function getPercentRelation(values: number[]): number[] {
