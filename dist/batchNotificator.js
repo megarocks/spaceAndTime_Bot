@@ -88,7 +88,7 @@ function sendingJob(chat) {
             //send results
             if (!response.ok)
                 throw new Error(response.description);
-            const { dayNumber: moonDayNumber = null } = moonDay || {};
+            const { dayNumber: moonDayNumber = undefined } = moonDay || {};
             let notificationResult = {
                 chatId
             };
@@ -116,9 +116,8 @@ function getMoonNewsMessage(options) {
 }
 function getSolarNewsMessage(options) {
     const { chat: { location: { coordinates: [lng, lat] }, solarDateNotified }, calculationDate, timeZone } = options;
-    const chatSolarDateNotified = luxon_1.DateTime.fromJSDate(solarDateNotified);
-    if (calculationDate.hasSame(chatSolarDateNotified, 'day'))
-        return; // calculation date should be other than solarDateNotified
+    if (solarDateNotified && calculationDate.hasSame(luxon_1.DateTime.fromJSDate(solarDateNotified), 'day'))
+        return;
     const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), lat, lng);
     const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
     const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);

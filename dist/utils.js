@@ -6,7 +6,7 @@ function createMoonMessage({ moonDay, timeZone }) {
     if (!moonDay)
         return 'Не могу рассчитать лунный день. Странная астрологическая обстановка. Учти это';
     const { dayNumber, dayStart, dayEnd } = moonDay;
-    const getMoonPhaseEmojiAndLabel = dayNumber => {
+    const getMoonPhaseEmojiAndLabel = (dayNumber) => {
         const scale = d3_scale_1.scaleQuantize().range([
             { symbol: '🌚', label: 'новолуние' },
             { symbol: '🌒', label: 'первая фаза' },

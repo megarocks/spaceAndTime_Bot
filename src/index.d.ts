@@ -3,7 +3,11 @@ import {Db} from 'mongodb'
 import {DateTime} from "luxon"
 
 export interface ContextMessageUpdateWithDb extends ContextMessageUpdate {
-  db: Db
+  db: Db,
+  location?: {
+    latitude: number,
+    longitude: number
+  }
 }
 
 export interface MoonDay {

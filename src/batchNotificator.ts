@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-import {MongoClient} from 'mongodb';
+import {Db, MongoClient} from 'mongodb';
 import {DateTime} from 'luxon';
 import geoTz from 'geo-tz';
 import request from 'request-promise-native';
@@ -8,20 +8,20 @@ import SunCalc from "suncalc";
 
 import {calculateMoonDayFor} from './moonCalc';
 import {createMoonMessage, createSolarMessage, getPercentRelation} from './utils'
-import { Chat, NotificationResult, MoonDay } from './index'
+import {Chat, NotificationResult, MoonDay} from './index'
 
 const mongoUri = process.env.MONGODB_URI || '';
-let db;
+let db: Db;
 
 async function main() {
   try {
-    const mongoClient = await MongoClient.connect(mongoUri, {useNewUrlParser: true});
+    const mongoClient: MongoClient = await MongoClient.connect(mongoUri, {useNewUrlParser: true});
     db = mongoClient.db();
     const chatsCollection = db.collection('chats');
     const chats: Chat[] = await chatsCollection.find({}).toArray();
-    const messageSendingJobs: Promise<NotificationResult>[] = chats.map(chat => sendingJob(chat));
-    const sendingResults: NotificationResult[] = await Promise.all(messageSendingJobs);
-    const successFullSendingResults: NotificationResult[] = sendingResults.filter(sr => !!sr);
+    const messageSendingJobs: Promise<NotificationResult | undefined>[] = chats.map(chat => sendingJob(chat));
+    const sendingResults: Array<NotificationResult | undefined> = await Promise.all(messageSendingJobs);
+    const successFullSendingResults: NotificationResult[] = sendingResults.filter(sr => !!sr) as NotificationResult[];
 
     console.log(`${successFullSendingResults.length} notifications successfully sent`);
 
@@ -83,7 +83,7 @@ async function sendingJob(chat: Chat): Promise<NotificationResult | undefined> {
 
     //send results
     if (!response.ok) throw new Error(response.description);
-    const {dayNumber: moonDayNumber = null} = moonDay || {};
+    const {dayNumber: moonDayNumber = undefined} = moonDay || {};
 
     let notificationResult: NotificationResult = {
       chatId
@@ -112,8 +112,7 @@ function getMoonNewsMessage(options: { moonDay: MoonDay | undefined, chat: Chat,
 function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, timeZone: string }): string | undefined {
   const {chat: {location: {coordinates: [lng, lat]}, solarDateNotified}, calculationDate, timeZone} = options
 
-  const chatSolarDateNotified = DateTime.fromJSDate(solarDateNotified)
-  if (calculationDate.hasSame(chatSolarDateNotified, 'day')) return; // calculation date should be other than solarDateNotified
+  if (solarDateNotified && calculationDate.hasSame(DateTime.fromJSDate(solarDateNotified), 'day')) return;
 
   const sunTimesToday = SunCalc.getTimes(calculationDate.toJSDate(), lat, lng);
   const sunRiseToday = DateTime.fromJSDate(sunTimesToday.sunrise)
@@ -131,7 +130,7 @@ function getSolarNewsMessage(options: { chat: Chat, calculationDate: DateTime, t
     nightLength.as('milliseconds')
   ])
 
-  return createSolarMessage({ sunRiseToday, sunSetToday, nightPercent, dayPercent, timeZone })
+  return createSolarMessage({sunRiseToday, sunSetToday, nightPercent, dayPercent, timeZone})
 }
 
 async function databaseSavingJob(data: NotificationResult) {
