@@ -17,7 +17,8 @@ export interface Chat {
 
 export interface NotificationResult {
     chatId: number,
-    moonDayNumber: number
+    moonDayNumber: number | undefined,
+    solarDate: Date
 }
 
 export function createReportMessage({moonDay, timeZone} : { moonDay: MoonDay, timeZone: string }): string {

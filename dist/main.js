@@ -87,6 +87,7 @@ app.help((ctx) => __awaiter(this, void 0, void 0, function* () {
 app.command('location', enter('location'));
 app.command('day', (ctx) => __awaiter(this, void 0, void 0, function* () {
     try {
+        //@ts-ignore
         const chat = yield ctx.db.collection('chats').findOne({ chatId: ctx.message.chat.id });
         if (!chat)
             return ctx.reply('Используйте команду /location чтобы задать своё местоположение');
@@ -113,6 +114,7 @@ module.exports = {
 function saveCoordinatesToChatsCollection(ctx, coordinates) {
     return __awaiter(this, void 0, void 0, function* () {
         const { lng, lat } = coordinates;
+        //@ts-ignore
         const chatsCollection = ctx.db.collection('chats');
         return chatsCollection.updateOne({ chatId: ctx.message.chat.id }, { $set: { chatId: ctx.message.chat.id, location: { type: 'Point', coordinates: [lng, lat] } } }, { upsert: true });
     });

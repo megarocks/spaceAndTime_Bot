@@ -91,6 +91,7 @@ app.help(async (ctx: ContextMessageUpdate) => {
 app.command('location', enter('location'));
 app.command('day', async (ctx: ContextMessageUpdate) => {
   try {
+    //@ts-ignore
     const chat = await ctx.db.collection('chats').findOne({chatId: ctx.message.chat.id});
     if (!chat) return ctx.reply('Используйте команду /location чтобы задать своё местоположение')
 
@@ -118,6 +119,7 @@ module.exports = {
 
 async function saveCoordinatesToChatsCollection(ctx: ContextMessageUpdate, coordinates: {lat: number, lng: number}) {
   const {lng, lat} = coordinates;
+  //@ts-ignore
   const chatsCollection = ctx.db.collection('chats')
   return chatsCollection.updateOne(
     {chatId: ctx.message.chat.id},

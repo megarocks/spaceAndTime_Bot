@@ -25,7 +25,7 @@
     "typescript": "^3.1.6"
   },
   "scripts": {
-    "start:dev": "nodemon --exec \"micro-bot dist/main.js -e .env \"",
+    "start": "nodemon --exec \"micro-bot dist/main.js -e .env \"",
     "build": "tsc --build",
     "send-notifications": "node dist/batchNotificator.js"
   }
