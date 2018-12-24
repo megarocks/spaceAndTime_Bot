@@ -6,10 +6,8 @@ import geoTz from 'geo-tz'
 import { DateTime } from 'luxon'
 import { Composer } from 'micro-bot'
 import { MongoClient } from 'mongodb'
-import Extra from 'telegraf/extra'
-import Markup from 'telegraf/markup'
+import { Extra, Markup, session } from 'telegraf'
 import Scene from 'telegraf/scenes/base'
-import session from 'telegraf/session'
 import Stage from 'telegraf/stage'
 
 import { IContextMessageUpdateWithDb } from './interfaces'
@@ -92,6 +90,9 @@ setLocationScene.on('text', async (ctx: IContextMessageUpdateWithDb) => {
 
     const [timeZone] = geoTz(lat, lng)
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), { lat, lng })
+    if (!moonDay) {
+      return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`)
+    }
     const reportMessage = createMoonMessage({ moonDay, timeZone })
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (e) {
@@ -127,6 +128,9 @@ app.command('day', async (ctx: IContextMessageUpdateWithDb) => {
     } = chat
     const [timeZone] = geoTz(lat, lng)
     const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), { lat, lng })
+    if (!moonDay) {
+      return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`)
+    }
     const reportMessage = createMoonMessage({ moonDay, timeZone })
     return ctx.replyWithMarkdown(reportMessage)
   } catch (err) {
