@@ -1,29 +1,29 @@
-import {DateTime} from "luxon"
-import {Db} from 'mongodb'
-import { ContextMessageUpdate } from 'telegraf';
+import { DateTime } from 'luxon'
+import { Db } from 'mongodb'
+import { ContextMessageUpdate } from 'telegraf'
 
 export interface IContextMessageUpdateWithDb extends ContextMessageUpdate {
   db: Db
 }
 
 export interface IMoonDay {
-  dayNumber: number,
-  dayStart: DateTime,
+  dayNumber: number
+  dayStart: DateTime
   dayEnd: DateTime
 }
 
 export interface IChat {
-  chatId: number,
+  chatId: number
   location: {
-    type: string,
+    type: string
     coordinates: [number, number]
-  },
-  moonDayNotified?: number,
+  }
+  moonDayNotified?: number
   solarDateNotified?: Date
 }
 
 export interface INotificationResult {
-  chatId: number,
-  moonDayNotified?: number,
+  chatId: number
+  moonDayNotified?: number
   solarDateNotified?: Date
 }
