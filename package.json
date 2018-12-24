@@ -6,13 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "@google/maps": "^0.5.5",
-    "@types/d3-scale": "^2.1.0",
-    "@types/lodash": "^4.14.118",
-    "@types/luxon": "^1.4.1",
-    "@types/mongodb": "^3.1.14",
-    "@types/request-promise-native": "^1.0.15",
-    "@types/suncalc": "^1.8.0",
-    "d3": "^5.7.0",
+    "d3-scale": "^2.1.2",
     "dotenv": "^6.1.0",
     "full-icu": "^1.2.1",
     "geo-tz": "^5.0.0",
@@ -22,15 +16,28 @@
     "moment": "^2.22.2",
     "mongodb": "^3.1.10",
     "nodemon": "^1.18.6",
+    "prettier": "^1.15.3",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "suncalc": "^1.8.0",
-    "typescript": "^3.1.6"
+    "telegraf": "^3.25.5",
+    "typescript": "3.2.2"
   },
   "scripts": {
     "start": "nodemon --exec \"micro-bot dist/main.js -e .env \"",
     "start:prod": "NODE_ICU_DATA=$(pwd)/node_modules/full-icu micro-bot dist/main.js -p $PORT",
     "build": "tsc --build --verbose",
     "send-notifications": "NODE_ICU_DATA=$(pwd)/node_modules/full-icu node dist/batchNotificator.js"
+  },
+  "devDependencies": {
+    "@types/d3-scale": "^2.1.0",
+    "@types/dotenv": "^6.1.0",
+    "@types/lodash": "^4.14.118",
+    "@types/luxon": "^1.4.1",
+    "@types/mongodb": "^3.1.14",
+    "@types/request-promise-native": "^1.0.15",
+    "@types/suncalc": "^1.8.0",
+    "tslint": "^5.12.0",
+    "tslint-config-prettier": "^1.17.0"
   }
 }
