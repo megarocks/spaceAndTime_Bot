@@ -12,6 +12,11 @@ export interface IMoonDay {
   dayEnd: DateTime
 }
 
+export interface IMoonPhase {
+  symbol: string,
+  label: string
+}
+
 export interface IChat {
   chatId: number
   location: {

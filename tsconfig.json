@@ -3,7 +3,9 @@
     "src/main.ts",
     "src/batchNotificator.ts",
     "src/moonCalc.ts",
-    "src/utils.ts"
+    "src/utils.ts",
+    "src/declarations.d.ts",
+    "src/interfaces.d.ts"
   ],
   "compilerOptions": {
     /* Basic Options */
