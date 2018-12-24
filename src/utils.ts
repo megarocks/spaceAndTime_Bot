@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { IMoonDay } from './index'
+import { IMoonDay } from './interfaces'
 import { getMoonPhaseEmojiAndLabel } from './moonCalc'
 
 export function createMoonMessage({ moonDay, timeZone }: { moonDay: IMoonDay; timeZone: string }): string {

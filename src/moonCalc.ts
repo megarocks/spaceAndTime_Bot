@@ -2,7 +2,7 @@ import { scaleQuantize } from 'd3-scale'
 import { minBy, uniq } from 'lodash'
 import { DateTime } from 'luxon'
 import { getMoonIllumination, getMoonTimes } from 'suncalc'
-import { IMoonDay, IMoonPhase } from './index'
+import { IMoonDay, IMoonPhase } from './interfaces'
 
 const getNewMoonDate = (params: {
   startDate: DateTime
