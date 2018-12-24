@@ -1,3 +1,8 @@
 declare module 'geo-tz'
 declare module '@google/maps'
 declare module 'micro-bot'
+declare module 'telegraf/extra'
+declare module 'telegraf/markup'
+declare module 'telegraf/session'
+declare module 'telegraf/stage'
+declare module 'telegraf/scenes/base'
