@@ -2296,17 +2296,6 @@ telegraf@^3.25.0:
     sandwich-stream "^2.0.1"
     telegram-typings "^3.6.0"
 
-telegraf@^3.25.5:
-  version "3.25.5"
-  resolved "https://registry.yarnpkg.com/telegraf/-/telegraf-3.25.5.tgz#d10c57e98085136866614e40c583aa4e607e1d85"
-  integrity sha512-gGyyAl5b+jVwR8L2YXxUYCgDqF3LUlXIlt2+sWozdKiVuWliPgATmdk/dp9I0Rw+fIePJVX/lQfgd8MfuSSwRA==
-  dependencies:
-    "@types/node" "^10.1.2"
-    debug "^4.0.1"
-    node-fetch "^2.2.0"
-    sandwich-stream "^2.0.1"
-    telegram-typings "^3.6.0"
-
 telegram-typings@^3.6.0:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/telegram-typings/-/telegram-typings-3.6.1.tgz#1288d547f8694b61f1c01c2993e295f3114d9e25"
