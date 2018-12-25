@@ -130,7 +130,7 @@ app.command('day', (ctx) => __awaiter(this, void 0, void 0, function* () {
     }
     catch (err) {
         console.error(err);
-        ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу');
+        return ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу');
     }
 }));
 module.exports = {

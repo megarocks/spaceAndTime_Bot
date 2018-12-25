@@ -142,7 +142,7 @@ app.command('day', async (ctx: IContextMessageUpdateWithDb) => {
     return ctx.replyWithMarkdown(reportMessage)
   } catch (err) {
     console.error(err)
-    ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу')
+    return ctx.reply('Сорян. Во время вычислений произошла ошибка. Сообщи об этом Веталу')
   }
 })
 
