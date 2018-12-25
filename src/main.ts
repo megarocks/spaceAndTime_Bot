@@ -6,11 +6,11 @@ import geoTz from 'geo-tz'
 import { DateTime } from 'luxon'
 import { Composer } from 'micro-bot'
 import { Db, MongoClient } from 'mongodb'
-import Extra from 'telegraf/extra';
-import Markup from 'telegraf/markup';
-import session from 'telegraf/session';
-import Stage from 'telegraf/stage';
-import Scene from 'telegraf/scenes/base';
+import Extra from 'telegraf/extra'
+import Markup from 'telegraf/markup'
+import Scene from 'telegraf/scenes/base'
+import session from 'telegraf/session'
+import Stage from 'telegraf/stage'
 
 import { IContextMessageUpdateWithDb } from './interfaces'
 import * as moonCalc from './moonCalc'
@@ -39,12 +39,11 @@ setLocationScene.enter(async (ctx: IContextMessageUpdateWithDb) => {
 })
 setLocationScene.on('location', async (ctx: IContextMessageUpdateWithDb) => {
   try {
-    const {
-      message: {
-        location: { latitude: lat, longitude: lng },
-        chat: {id: chatId}
-      },
-    } = ctx
+    const { message: { chat: { id: chatId = null } = {}, location: { latitude: lat = null, longitude: lng = null } = {} } = {} } = ctx
+
+    if (!chatId) {
+      throw new Error(`chat id is not defined`)
+    }
 
     if (!lat || !lng) {
       return ctx.reply('Не могу определить координаты. Проверь службы геолокации')
@@ -69,15 +68,16 @@ setLocationScene.on('location', async (ctx: IContextMessageUpdateWithDb) => {
 })
 setLocationScene.on('text', async (ctx: IContextMessageUpdateWithDb) => {
   try {
-    const {
-      message: {
-        chat: {id: chatId},
-        text
-      },
-    } = ctx
+    const { chat: { id: chatId = null } = {}, message: { text = '' } = {} } = ctx
+
+    if (!chatId) {
+      throw new Error(`chat id is not defined`)
+    }
+
     const geoCodingResponse = await googleMapsClient.geocode({ address: text }).asPromise()
-    if (!geoCodingResponse.json.results.length)
+    if (!geoCodingResponse.json.results.length) {
       return ctx.reply(`Не удалось определить координаты: ${text}.` + `Попробуй ввести официальное название ближайшего населённого пункта`)
+    }
 
     const {
       json: {
@@ -122,7 +122,8 @@ app.help(async (ctx: IContextMessageUpdateWithDb) => {
 app.command('location', enter('location'))
 app.command('day', async (ctx: IContextMessageUpdateWithDb) => {
   try {
-    const chat = await ctx.db.collection('chats').findOne({ chatId: ctx.message.chat.id })
+    const { message: { chat: { id: chatId = null } = {} } = {} } = ctx
+    const chat = await ctx.db.collection('chats').findOne({ chatId })
     if (!chat) {
       return ctx.reply('Используйте команду /location чтобы задать своё местоположение')
     }

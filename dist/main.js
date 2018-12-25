@@ -27,9 +27,9 @@ const micro_bot_1 = require("micro-bot");
 const mongodb_1 = require("mongodb");
 const extra_1 = __importDefault(require("telegraf/extra"));
 const markup_1 = __importDefault(require("telegraf/markup"));
+const base_1 = __importDefault(require("telegraf/scenes/base"));
 const session_1 = __importDefault(require("telegraf/session"));
 const stage_1 = __importDefault(require("telegraf/stage"));
-const base_1 = __importDefault(require("telegraf/scenes/base"));
 const moonCalc = __importStar(require("./moonCalc"));
 const utils_1 = require("./utils");
 const { enter, leave } = stage_1.default;
@@ -49,7 +49,10 @@ setLocationScene.enter((ctx) => __awaiter(this, void 0, void 0, function* () {
 }));
 setLocationScene.on('location', (ctx) => __awaiter(this, void 0, void 0, function* () {
     try {
-        const { message: { location: { latitude: lat, longitude: lng }, chat: { id: chatId } }, } = ctx;
+        const { message: { chat: { id: chatId = null } = {}, location: { latitude: lat = null, longitude: lng = null } = {} } = {} } = ctx;
+        if (!chatId) {
+            throw new Error(`chat id is not defined`);
+        }
         if (!lat || !lng) {
             return ctx.reply('Не могу определить координаты. Проверь службы геолокации');
         }
@@ -73,10 +76,14 @@ setLocationScene.on('location', (ctx) => __awaiter(this, void 0, void 0, functio
 }));
 setLocationScene.on('text', (ctx) => __awaiter(this, void 0, void 0, function* () {
     try {
-        const { message: { chat: { id: chatId }, text }, } = ctx;
+        const { chat: { id: chatId = null } = {}, message: { text = '' } = {} } = ctx;
+        if (!chatId) {
+            throw new Error(`chat id is not defined`);
+        }
         const geoCodingResponse = yield googleMapsClient.geocode({ address: text }).asPromise();
-        if (!geoCodingResponse.json.results.length)
+        if (!geoCodingResponse.json.results.length) {
             return ctx.reply(`Не удалось определить координаты: ${text}.` + `Попробуй ввести официальное название ближайшего населённого пункта`);
+        }
         const { json: { results: [{ geometry: { location: { lat, lng }, }, },], }, } = geoCodingResponse;
         yield saveCoordinatesToChatsCollection(ctx.db, chatId, { lat, lng });
         yield ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
@@ -107,7 +114,8 @@ app.help((ctx) => __awaiter(this, void 0, void 0, function* () {
 app.command('location', enter('location'));
 app.command('day', (ctx) => __awaiter(this, void 0, void 0, function* () {
     try {
-        const chat = yield ctx.db.collection('chats').findOne({ chatId: ctx.message.chat.id });
+        const { message: { chat: { id: chatId = null } = {} } = {} } = ctx;
+        const chat = yield ctx.db.collection('chats').findOne({ chatId });
         if (!chat) {
             return ctx.reply('Используйте команду /location чтобы задать своё местоположение');
         }
