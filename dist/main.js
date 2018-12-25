@@ -34,7 +34,7 @@ const moonCalc = __importStar(require("./moonCalc"));
 const utils_1 = require("./utils");
 const { enter, leave } = stage_1.default;
 const googleMapsClient = maps_1.default.createClient({
-    Promise: Promise,
+    Promise,
 });
 const sendLocationKeyboard = extra_1.default.markup((markup) => markup
     .keyboard([markup.locationRequestButton('📍 Оправить координаты!')])

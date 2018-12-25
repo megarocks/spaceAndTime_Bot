@@ -19,7 +19,7 @@ import { createHelpMessage, createMoonMessage, createStartMessage } from './util
 const { enter, leave } = Stage
 
 const googleMapsClient = googleMaps.createClient({
-  Promise: Promise,
+  Promise,
 })
 
 const sendLocationKeyboard = Extra.markup((markup: any) =>
