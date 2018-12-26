@@ -42,7 +42,8 @@ setLocationScene.on('location', async (ctx: IContextMessageUpdateWithDb) => {
     const { message: { chat: { id: chatId = null } = {}, location: { latitude: lat = null, longitude: lng = null } = {} } = {} } = ctx
 
     if (!chatId) {
-      throw new Error(`chat id is not defined`)
+      leave()
+      return ctx.reply('chat id is not defined', removeKb)
     }
 
     if (!lat || !lng) {
@@ -71,7 +72,8 @@ setLocationScene.on('text', async (ctx: IContextMessageUpdateWithDb) => {
     const { chat: { id: chatId = null } = {}, message: { text = '' } = {} } = ctx
 
     if (!chatId) {
-      throw new Error(`chat id is not defined`)
+      leave()
+      return ctx.reply('chat id is not defined', removeKb)
     }
 
     const geoCodingResponse = await googleMapsClient.geocode({ address: text }).asPromise()

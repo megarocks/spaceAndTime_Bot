@@ -51,7 +51,8 @@ setLocationScene.on('location', (ctx) => __awaiter(this, void 0, void 0, functio
     try {
         const { message: { chat: { id: chatId = null } = {}, location: { latitude: lat = null, longitude: lng = null } = {} } = {} } = ctx;
         if (!chatId) {
-            throw new Error(`chat id is not defined`);
+            leave();
+            return ctx.reply('chat id is not defined', removeKb);
         }
         if (!lat || !lng) {
             return ctx.reply('Не могу определить координаты. Проверь службы геолокации');
@@ -78,7 +79,8 @@ setLocationScene.on('text', (ctx) => __awaiter(this, void 0, void 0, function* (
     try {
         const { chat: { id: chatId = null } = {}, message: { text = '' } = {} } = ctx;
         if (!chatId) {
-            throw new Error(`chat id is not defined`);
+            leave();
+            return ctx.reply('chat id is not defined', removeKb);
         }
         const geoCodingResponse = yield googleMapsClient.geocode({ address: text }).asPromise();
         if (!geoCodingResponse.json.results.length) {
