@@ -84,10 +84,12 @@ async function createNotificationJob(chat: IChat): Promise<INotificationResult |
     } // if no messages or only common message - no sense to send
     const reportMessage = meaningFullMessages.join('\n')
 
+    const recipientTime = calculationDate.setZone(timeZone)
     // send request
     const requestOptions = {
       body: {
         chat_id: chatId,
+        disable_notification: recipientTime.hour < 8 || recipientTime.hour > 21,
         parse_mode: 'Markdown',
         text: reportMessage,
       },

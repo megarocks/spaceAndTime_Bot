@@ -90,10 +90,12 @@ function createNotificationJob(chat) {
                 return;
             } // if no messages or only common message - no sense to send
             const reportMessage = meaningFullMessages.join('\n');
+            const recipientTime = calculationDate.setZone(timeZone);
             // send request
             const requestOptions = {
                 body: {
                     chat_id: chatId,
+                    disable_notification: recipientTime.hour < 8 || recipientTime.hour > 22,
                     parse_mode: 'Markdown',
                     text: reportMessage,
                 },
