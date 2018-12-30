@@ -4,16 +4,18 @@ import { DateTime } from 'luxon'
 import { getMoonIllumination, getMoonTimes } from 'suncalc'
 import { IMoonDay, IMoonPhase } from './interfaces'
 
-const getNewMoonDate = (params: {
-  startDate: DateTime
-  shouldCalcPrevNewMoon?: boolean
-}): DateTime => {
+const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?: boolean; anotherNewMoon?: DateTime }): DateTime => {
   const { startDate } = params
   const moonIlluminationMoments = []
   for (let i = 0; i < 60 * 24 * 30; i++) {
-    const calculationMoment: DateTime = params.shouldCalcPrevNewMoon
-      ? startDate.minus({ minutes: i })
-      : startDate.plus({ minutes: i })
+    const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i })
+
+    if (params.anotherNewMoon) {
+      const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 29
+      if (shouldSkip) {
+        continue
+      }
+    }
 
     const moonIllumination = getMoonIllumination(calculationMoment.toJSDate())
 
@@ -30,11 +32,7 @@ const getNewMoonDate = (params: {
   return newMoon.moment
 }
 
-const getMoonRisesBetween = (params: {
-  prevNewMoon: DateTime
-  nextNewMoon: DateTime
-  coordinates: { lat: number; lng: number }
-}): DateTime[] => {
+const getMoonRisesBetween = (params: { prevNewMoon: DateTime; nextNewMoon: DateTime; coordinates: { lat: number; lng: number } }): DateTime[] => {
   const {
     prevNewMoon,
     nextNewMoon,
@@ -44,25 +42,17 @@ const getMoonRisesBetween = (params: {
 
   moonRises.push(prevNewMoon.toISO()) // we use exact new moon moment as moon moth boundary
 
-  const hoursBetweenNewMoons = Math.floor(
-    nextNewMoon.diff(prevNewMoon, 'hours').hours
-  )
+  const hoursBetweenNewMoons = Math.floor(nextNewMoon.diff(prevNewMoon, 'hours').hours)
   for (let i = 0; i <= hoursBetweenNewMoons; i++) {
-    const moonTimesAtSomeMomentOfMonth = getMoonTimes(
-      prevNewMoon.plus({ hours: i }).toJSDate(),
-      lat,
-      lng,
-      true
-    )
+    const moonTimesAtSomeMomentOfMonth = getMoonTimes(prevNewMoon.plus({ hours: i }).toJSDate(), lat, lng, true)
+
     if (!moonTimesAtSomeMomentOfMonth.rise) {
       continue
     }
 
-    const moonRiseMoment = DateTime.fromJSDate(
-      moonTimesAtSomeMomentOfMonth.rise
-    )
+    const moonRiseMoment = DateTime.fromJSDate(moonTimesAtSomeMomentOfMonth.rise)
     if (moonRiseMoment >= prevNewMoon && moonRiseMoment <= nextNewMoon) {
-      moonRises.push(moonRiseMoment.toISO())
+      moonRises.push(moonRiseMoment.toUTC().toISO())
     }
   }
 
@@ -84,15 +74,12 @@ const convertMoonRisesToDays = (moonRises: DateTime[]): IMoonDay[] => {
   return moonDays
 }
 
-export const calculateMoonDayFor = (
-  date: DateTime,
-  coordinates: { lat: number; lng: number }
-): IMoonDay | undefined => {
+export const calculateMoonDayFor = (date: DateTime, coordinates: { lat: number; lng: number }): IMoonDay | undefined => {
   const prevNewMoon = getNewMoonDate({
-    shouldCalcPrevNewMoon: true,
+    isTravelingToPast: true,
     startDate: date,
   })
-  const nextNewMoon = getNewMoonDate({ startDate: date })
+  const nextNewMoon = getNewMoonDate({ startDate: date, anotherNewMoon: prevNewMoon })
 
   const moonRisesAtSoughtMonth = getMoonRisesBetween({
     coordinates,
@@ -101,6 +88,7 @@ export const calculateMoonDayFor = (
   })
 
   const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth)
+  console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })))
 
   return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd)
 }
