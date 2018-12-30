@@ -8,9 +8,13 @@ const getNewMoonDate = (params) => {
     const { startDate } = params;
     const moonIlluminationMoments = [];
     for (let i = 0; i < 60 * 24 * 30; i++) {
-        const calculationMoment = params.shouldCalcPrevNewMoon
-            ? startDate.minus({ minutes: i })
-            : startDate.plus({ minutes: i });
+        const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i });
+        if (params.anotherNewMoon) {
+            const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 29;
+            if (shouldSkip) {
+                continue;
+            }
+        }
         const moonIllumination = suncalc_1.getMoonIllumination(calculationMoment.toJSDate());
         moonIlluminationMoments.push({
             illuminationFraction: moonIllumination.fraction,
@@ -35,7 +39,7 @@ const getMoonRisesBetween = (params) => {
         }
         const moonRiseMoment = luxon_1.DateTime.fromJSDate(moonTimesAtSomeMomentOfMonth.rise);
         if (moonRiseMoment >= prevNewMoon && moonRiseMoment <= nextNewMoon) {
-            moonRises.push(moonRiseMoment.toISO());
+            moonRises.push(moonRiseMoment.toUTC().toISO());
         }
     }
     moonRises.push(nextNewMoon.toISO()); // we use exact new moon moment as moon moth boundary
@@ -55,16 +59,17 @@ const convertMoonRisesToDays = (moonRises) => {
 };
 exports.calculateMoonDayFor = (date, coordinates) => {
     const prevNewMoon = getNewMoonDate({
-        shouldCalcPrevNewMoon: true,
+        isTravelingToPast: true,
         startDate: date,
     });
-    const nextNewMoon = getNewMoonDate({ startDate: date });
+    const nextNewMoon = getNewMoonDate({ startDate: date, anotherNewMoon: prevNewMoon });
     const moonRisesAtSoughtMonth = getMoonRisesBetween({
         coordinates,
         nextNewMoon,
         prevNewMoon,
     });
     const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth);
+    console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })));
     return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd);
 };
 exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
