@@ -7,11 +7,11 @@ import { IMoonDay, IMoonPhase } from './interfaces'
 const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?: boolean; anotherNewMoon?: DateTime }): DateTime => {
   const { startDate } = params
   const moonIlluminationMoments = []
-  for (let i = 0; i < 60 * 24 * 30; i++) {
+  for (let i = 0; i < 717 * 60; i++) {  // up to 717 hours per lunar month
     const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i })
 
     if (params.anotherNewMoon) {
-      const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 29
+      const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 25
       if (shouldSkip) {
         continue
       }
@@ -52,23 +52,23 @@ const getMoonRisesBetween = (params: { prevNewMoon: DateTime; nextNewMoon: DateT
 
     const moonRiseMoment = DateTime.fromJSDate(moonTimesAtSomeMomentOfMonth.rise)
     if (moonRiseMoment >= prevNewMoon && moonRiseMoment <= nextNewMoon) {
-      moonRises.push(moonRiseMoment.toUTC().toISO())
+      moonRises.push(moonRiseMoment.toISO())
     }
   }
 
   moonRises.push(nextNewMoon.toISO()) // we use exact new moon moment as moon moth boundary
 
   const uniqueMoonRises = uniq(moonRises)
-  return uniqueMoonRises.map(ISODate => DateTime.fromISO(ISODate))
+  return uniqueMoonRises.map(ISODate => DateTime.fromISO(ISODate).toUTC())
 }
 
 const convertMoonRisesToDays = (moonRises: DateTime[]): IMoonDay[] => {
   const moonDays = []
   for (let i = 0; i < moonRises.length - 1; i++) {
     moonDays.push({
+      dayStart: moonRises[i],
       dayEnd: moonRises[i + 1],
       dayNumber: i + 1,
-      dayStart: moonRises[i],
     })
   }
   return moonDays
@@ -88,8 +88,18 @@ export const calculateMoonDayFor = (date: DateTime, coordinates: { lat: number; 
   })
 
   const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth)
-  console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })))
-
+  console.log('\n')
+  // console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })))
+  console.log({
+    prevNewMoon: prevNewMoon.toISO(),
+    nextNewMoon: nextNewMoon.toISO(),
+    calcDate: date.toISO(),
+    daysInMonth: moonDays.length,
+    hoursToPrevNewMoon: date.diff(prevNewMoon).as('hours'),
+    hoursToNextNewMoon: nextNewMoon.diff(date).as('hours'),
+    hoursBetweenMoons: nextNewMoon.diff(prevNewMoon).as('hours')
+  })
+  console.log('\n')
   return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd)
 }
 
