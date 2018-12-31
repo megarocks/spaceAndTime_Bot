@@ -75,12 +75,12 @@ function* timeMachine({
 //   ...timeMachine({ start: DateTime.utc(2018, 12, 10), end: DateTime.utc(2020, 12, 31), stepUnit: 'months', step: 1, lat: 52.3, lng: 4.9 }),
 // ]
 
-const minutesTest = [
-  ...timeMachine({ start: DateTime.utc(2019, 1, 5, 15, 33), end: DateTime.utc(2019, 1, 5, 15, 34), stepUnit: 'minutes', step: 1, lat: 52.3, lng: 4.9 }),
-]
-
-const minutesTestEnd = [
-  ...timeMachine({ start: DateTime.utc(2019, 1, 5, 23, 28), end: DateTime.utc(2019, 1, 5, 23, 29), stepUnit: 'minutes', step: 1, lat: 52.3, lng: 4.9 }),
-]
+// const minutesTest = [
+//   ...timeMachine({ start: DateTime.utc(2019, 1, 5, 15, 33), end: DateTime.utc(2019, 1, 5, 15, 34), stepUnit: 'minutes', step: 1, lat: 52.3, lng: 4.9 }),
+// ]
+//
+// const minutesTestEnd = [
+//   ...timeMachine({ start: DateTime.utc(2019, 1, 5, 23, 28), end: DateTime.utc(2019, 1, 5, 23, 29), stepUnit: 'minutes', step: 1, lat: 52.3, lng: 4.9 }),
+// ]
 
 export default timeMachine

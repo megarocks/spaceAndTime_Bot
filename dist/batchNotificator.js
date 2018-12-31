@@ -95,7 +95,7 @@ function createNotificationJob(chat) {
             const requestOptions = {
                 body: {
                     chat_id: chatId,
-                    disable_notification: recipientTime.hour < 8 || recipientTime.hour > 22,
+                    disable_notification: recipientTime.hour < 8 || recipientTime.hour > 21,
                     parse_mode: 'Markdown',
                     text: reportMessage,
                 },

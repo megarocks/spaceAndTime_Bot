@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import { getMoonIllumination, getMoonTimes } from 'suncalc'
 import { IMoonDay, IMoonPhase } from './interfaces'
 
-const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?: boolean; anotherNewMoon?: DateTime }): DateTime => {
+export const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?: boolean; anotherNewMoon?: DateTime }): DateTime => {
   const { startDate } = params
   const moonIlluminationMoments = []
   for (let i = 0; i < 717 * 60; i++) {  // up to 717 hours per lunar month
@@ -62,7 +62,14 @@ const getMoonRisesBetween = (params: { prevNewMoon: DateTime; nextNewMoon: DateT
   return uniqueMoonRises.map(ISODate => DateTime.fromISO(ISODate).toUTC())
 }
 
-const convertMoonRisesToDays = (moonRises: DateTime[]): IMoonDay[] => {
+export const getMoonDaysBetweenNewMoons = (params: { prevNewMoon: DateTime; nextNewMoon: DateTime; coordinates: { lat: number; lng: number } }): IMoonDay[] => {
+  const { prevNewMoon, nextNewMoon, coordinates } = params
+  const moonRises = getMoonRisesBetween({
+    coordinates,
+    nextNewMoon,
+    prevNewMoon,
+  })
+
   const moonDays = []
   for (let i = 0; i < moonRises.length - 1; i++) {
     moonDays.push({
@@ -81,25 +88,23 @@ export const calculateMoonDayFor = (date: DateTime, coordinates: { lat: number; 
   })
   const nextNewMoon = getNewMoonDate({ startDate: date, anotherNewMoon: prevNewMoon })
 
-  const moonRisesAtSoughtMonth = getMoonRisesBetween({
+  const moonDays = getMoonDaysBetweenNewMoons({
     coordinates,
     nextNewMoon,
     prevNewMoon,
   })
-
-  const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth)
-  console.log('\n')
-  // console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })))
-  console.log({
-    prevNewMoon: prevNewMoon.toISO(),
-    nextNewMoon: nextNewMoon.toISO(),
-    calcDate: date.toISO(),
-    daysInMonth: moonDays.length,
-    hoursToPrevNewMoon: date.diff(prevNewMoon).as('hours'),
-    hoursToNextNewMoon: nextNewMoon.diff(date).as('hours'),
-    hoursBetweenMoons: nextNewMoon.diff(prevNewMoon).as('hours')
-  })
-  console.log('\n')
+  // console.log('\n')
+  // // console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })))
+  // console.log({
+  //   prevNewMoon: prevNewMoon.toISO(),
+  //   nextNewMoon: nextNewMoon.toISO(),
+  //   calcDate: date.toISO(),
+  //   daysInMonth: moonDays.length,
+  //   minutesToPrevNewMoon: date.diff(prevNewMoon).as('minutes'),
+  //   minutesToNextNewMoon: nextNewMoon.diff(date).as('minutes'),
+  //   minutesBetweenMoons: nextNewMoon.diff(prevNewMoon).as('minutes'),
+  // })
+  // console.log('\n')
   return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd)
 }
 
@@ -115,7 +120,7 @@ export const getMoonPhaseEmojiAndLabel = (dayNumber: number): IMoonPhase => {
       { symbol: '🌗', label: 'третья четверть' },
       { symbol: '🌘', label: 'четвёртая фаза' },
     ])
-    .domain([1, 29]) // FIXME get number of days from current month
+    .domain([1, 30]) // FIXME get number of days from current month
 
   return scale(dayNumber)
 }
