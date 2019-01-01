@@ -6,6 +6,9 @@ const luxon_1 = require("luxon");
 const suncalc_1 = require("suncalc");
 exports.getNewMoonDate = (params) => {
     const { startDate } = params;
+    console.log(suncalc_1.getMoonIllumination(startDate.toJSDate()));
+    // TODO detect if its a month edge
+    // TODO detect if its end or start of month
     const moonIlluminationMoments = [];
     for (let i = 0; i < 717 * 60; i++) { // up to 717 hours per lunar month
         const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i });
@@ -102,4 +105,9 @@ exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
     ])
         .domain([1, 30]); // FIXME get number of days from current month
     return scale(dayNumber);
+};
+exports.isMoonMonthEdge = (date) => {
+    const illumination = suncalc_1.getMoonIllumination(date.toJSDate()).fraction;
+    console.log(illumination);
+    return illumination <= 0.016;
 };

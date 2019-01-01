@@ -6,6 +6,10 @@ import { IMoonDay, IMoonPhase } from './interfaces'
 
 export const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?: boolean; anotherNewMoon?: DateTime }): DateTime => {
   const { startDate } = params
+  console.log(getMoonIllumination(startDate.toJSDate()))
+  // TODO detect if its a month edge
+  // TODO detect if its end or start of month
+
   const moonIlluminationMoments = []
   for (let i = 0; i < 717 * 60; i++) {  // up to 717 hours per lunar month
     const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i })
@@ -24,6 +28,7 @@ export const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?
       moment: calculationMoment,
     })
   }
+
   const newMoon = minBy(moonIlluminationMoments, i => i.illuminationFraction)
   if (!newMoon) {
     throw new Error('can`t calculate new moon for: ' + startDate.toISO())
@@ -123,4 +128,10 @@ export const getMoonPhaseEmojiAndLabel = (dayNumber: number): IMoonPhase => {
     .domain([1, 30]) // FIXME get number of days from current month
 
   return scale(dayNumber)
+}
+
+export const isMoonMonthEdge = (date: DateTime): boolean => {
+  const illumination = getMoonIllumination(date.toJSDate()).fraction
+  console.log(illumination)
+  return illumination <= 0.016
 }

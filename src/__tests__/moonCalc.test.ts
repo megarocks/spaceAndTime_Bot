@@ -54,6 +54,8 @@ const preCalculatedNewMoons2019 = [
 
 const coordinates = { lat: 52.3, lng: 4.9 }
 
+const dateFormat = 'd MMM, y H:mm'
+
 test('it calculates practical PREV new moon day for middle of moon month with 180 minutes precision', () => {
   const diffsBetweenTheoryAndPractice = theoreticalNewMoons2019.map(theoreticalNewMoon => {
     const calculationDate = theoreticalNewMoon.plus({ days: 15 })
@@ -101,10 +103,40 @@ test('moon months length', () => {
   expect([minMoonMonthLengths, maxMoonMonthLengths].join(' ')).toBe('29 30')
 })
 
+describe('detecting moon moth edge', () => {
+  const edgeArea = { unit: 'hours', value: 24 }
+
+  preCalculatedNewMoons2019.forEach(newMoon => {
+    describe(`${newMoon.toFormat(dateFormat)}`, () => {
+
+      test('when date is at the moment of new moon', () => {
+        expect(moonCalc.isMoonMonthEdge(newMoon)).toBe(true)
+      })
+
+      test('when date just entered month edge area', () => {
+        expect(moonCalc.isMoonMonthEdge(newMoon.minus({[edgeArea.unit]: edgeArea.value}))).toBe(true)
+      })
+
+      test('when date going to leave month edge area', () => {
+        expect(moonCalc.isMoonMonthEdge(newMoon.plus({[edgeArea.unit]: edgeArea.value}))).toBe(true)
+      })
+
+      test('when date not yet at the edge area', () => {
+        expect(moonCalc.isMoonMonthEdge(newMoon.minus({[edgeArea.unit]: edgeArea.value + 9}))).toBe(false)
+      })
+
+      test('when date already out of the edge area', () => {
+        expect(moonCalc.isMoonMonthEdge(newMoon.plus({[edgeArea.unit]: edgeArea.value + 9}))).toBe(false)
+      })
+
+    })
+  })
+
+})
+
 describe('new moon', () => {
-  const dateFormat = 'd MMM, y H:mm'
   describe('month edges', () => {
-    const timeShift = { unit: 'minutes', value: 1 }
+    const timeShift = { unit: 'hours', value: 24 }
     describe('end of month', () => {
       describe('prev moon', () => {
         preCalculatedNewMoons2019.forEach((moon, idx) => {
