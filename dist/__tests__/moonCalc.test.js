@@ -100,31 +100,32 @@ test('moon months length', () => {
     const maxMoonMonthLengths = lodash_1.max(moonMothLengths);
     expect([minMoonMonthLengths, maxMoonMonthLengths].join(' ')).toBe('29 30');
 });
-describe('detecting moon moth edge', () => {
-    const edgeArea = { unit: 'hours', value: 24 };
-    preCalculatedNewMoons2019.forEach(newMoon => {
-        describe(`${newMoon.toFormat(dateFormat)}`, () => {
-            test('when date is at the moment of new moon', () => {
-                expect(moonCalc.isMoonMonthEdge(newMoon)).toBe(true);
+describe('detecting moon trend', () => {
+    describe('after new moon', () => {
+        preCalculatedNewMoons2019.forEach(moon => {
+            test(moon.toFormat(dateFormat), () => {
+                expect(moonCalc.isBeforeFullMoon(moon.plus({ minutes: 1 }))).toBe(true);
             });
-            test('when date just entered month edge area', () => {
-                expect(moonCalc.isMoonMonthEdge(newMoon.minus({ [edgeArea.unit]: edgeArea.value }))).toBe(true);
+        });
+    });
+    describe('before new moon', () => {
+        preCalculatedNewMoons2019.forEach(moon => {
+            test(moon.toFormat(dateFormat), () => {
+                expect(moonCalc.isBeforeFullMoon(moon.minus({ minutes: 1 }))).toBe(false);
             });
-            test('when date going to leave month edge area', () => {
-                expect(moonCalc.isMoonMonthEdge(newMoon.plus({ [edgeArea.unit]: edgeArea.value }))).toBe(true);
-            });
-            test('when date not yet at the edge area', () => {
-                expect(moonCalc.isMoonMonthEdge(newMoon.minus({ [edgeArea.unit]: edgeArea.value + 9 }))).toBe(false);
-            });
-            test('when date already out of the edge area', () => {
-                expect(moonCalc.isMoonMonthEdge(newMoon.plus({ [edgeArea.unit]: edgeArea.value + 9 }))).toBe(false);
+        });
+    });
+    describe('at new moon', () => {
+        preCalculatedNewMoons2019.forEach(moon => {
+            test(moon.toFormat(dateFormat), () => {
+                expect(moonCalc.isBeforeFullMoon(moon)).toBe(true);
             });
         });
     });
 });
 describe('new moon', () => {
     describe('month edges', () => {
-        const timeShift = { unit: 'hours', value: 24 };
+        const timeShift = { unit: 'minutes', value: 1 };
         describe('end of month', () => {
             describe('prev moon', () => {
                 preCalculatedNewMoons2019.forEach((moon, idx) => {

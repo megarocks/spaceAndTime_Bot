@@ -106,8 +106,8 @@ exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
         .domain([1, 30]); // FIXME get number of days from current month
     return scale(dayNumber);
 };
-exports.isMoonMonthEdge = (date) => {
-    const illumination = suncalc_1.getMoonIllumination(date.toJSDate()).fraction;
-    console.log(illumination);
-    return illumination <= 0.016;
+exports.isBeforeFullMoon = (moment) => {
+    const currentIllumination = suncalc_1.getMoonIllumination(moment.toJSDate()).fraction;
+    const nextMomentIllumination = suncalc_1.getMoonIllumination(moment.plus({ minutes: 1 }).toJSDate()).fraction;
+    return nextMomentIllumination > currentIllumination;
 };
