@@ -56,83 +56,158 @@ const coordinates = { lat: 52.3, lng: 4.9 }
 
 const dateFormat = 'd MMM, y H:mm'
 
-test('it calculates practical PREV new moon day for middle of moon month with 180 minutes precision', () => {
-  const diffsBetweenTheoryAndPractice = theoreticalNewMoons2019.map(theoreticalNewMoon => {
-    const calculationDate = theoreticalNewMoon.plus({ days: 15 })
-    const practicalNewMoon = moonCalc.getNewMoonDate({ startDate: calculationDate, isTravelingToPast: true })
-    console.log(practicalNewMoon.toISO())
-    return Math.abs(theoreticalNewMoon.diff(practicalNewMoon).as('minutes'))
+describe('moon calc', () => {
+  test('it calculates practical PREV new moon day for middle of moon month with 180 minutes precision', () => {
+    const diffsBetweenTheoryAndPractice = theoreticalNewMoons2019.map(theoreticalNewMoon => {
+      const calculationDate = theoreticalNewMoon.plus({ days: 15 })
+      const practicalNewMoon = moonCalc.getNewMoonDate({ startDate: calculationDate, isTravelingToPast: true })
+      return Math.abs(theoreticalNewMoon.diff(practicalNewMoon).as('minutes'))
+    })
+    expect(max(diffsBetweenTheoryAndPractice)).toBeLessThanOrEqual(180)
   })
-  expect(max(diffsBetweenTheoryAndPractice)).toBeLessThanOrEqual(180)
-})
 
-test('it calculates practical NEXT new moon day for middle of moon month with 180 minutes precision', () => {
-  const diffsBetweenTheoryAndPractice = theoreticalNewMoons2019.map(theoreticalNewMoon => {
-    const calculationDate = theoreticalNewMoon.minus({ days: 15 })
-    const practicalNewMoon = moonCalc.getNewMoonDate({ startDate: calculationDate })
-    return Math.abs(theoreticalNewMoon.diff(practicalNewMoon).as('minutes'))
+  test('it calculates practical NEXT new moon day for middle of moon month with 180 minutes precision', () => {
+    const diffsBetweenTheoryAndPractice = theoreticalNewMoons2019.map(theoreticalNewMoon => {
+      const calculationDate = theoreticalNewMoon.minus({ days: 15 })
+      const practicalNewMoon = moonCalc.getNewMoonDate({ startDate: calculationDate })
+      return Math.abs(theoreticalNewMoon.diff(practicalNewMoon).as('minutes'))
+    })
+    expect(max(diffsBetweenTheoryAndPractice)).toBeLessThanOrEqual(180)
   })
-  expect(max(diffsBetweenTheoryAndPractice)).toBeLessThanOrEqual(180)
-})
 
-test('moon day calculation', () => {
-  const moonDay = moonCalc.calculateMoonDayFor(preCalculatedNewMoons2019[7].plus({ days: 7 }), coordinates)
-  expect(moonDay).toBeDefined()
-})
-
-test('moon day number calculation', () => {
-  const moonDay = moonCalc.calculateMoonDayFor(preCalculatedNewMoons2019[7].plus({ days: 7 }), coordinates)
-  const { dayNumber = null } = moonDay || {}
-  expect(dayNumber).toBe(8)
-})
-
-test('moon months length', () => {
-  const moonMothLengths = preCalculatedNewMoons2019.map((newMoon, idx) => {
-    let prevNewMoon = newMoon
-    let nextNewMoon = preCalculatedNewMoons2019[idx + 1]
-    if (idx === preCalculatedNewMoons2019.length - 1) {
-      prevNewMoon = preCalculatedNewMoons2019[preCalculatedNewMoons2019.length - 2]
-      nextNewMoon = newMoon
-    }
-    const moonMoth = moonCalc.getMoonDaysBetweenNewMoons({ prevNewMoon, nextNewMoon, coordinates })
-    return moonMoth.length
+  test('moon day calculation', () => {
+    const moonDay = moonCalc.calculateMoonDayFor(preCalculatedNewMoons2019[7].plus({ days: 7 }), coordinates)
+    expect(moonDay).toBeDefined()
   })
-  const minMoonMonthLengths = min(moonMothLengths)
-  const maxMoonMonthLengths = max(moonMothLengths)
 
-  expect([minMoonMonthLengths, maxMoonMonthLengths].join(' ')).toBe('29 30')
-})
+  test('moon day number calculation', () => {
+    const moonDay = moonCalc.calculateMoonDayFor(preCalculatedNewMoons2019[7].plus({ days: 7 }), coordinates)
+    const { dayNumber = null } = moonDay || {}
+    expect(dayNumber).toBe(8)
+  })
 
-describe('detecting moon trend', () => {
-  describe('after new moon', () => {
-    preCalculatedNewMoons2019.forEach(moon => {
-      test(moon.toFormat(dateFormat), () => {
-        expect(moonCalc.isBeforeFullMoon(moon.plus({ minutes: 1 }))).toBe(true)
+  test('moon months length', () => {
+    const moonMothLengths = preCalculatedNewMoons2019.map((newMoon, idx) => {
+      let prevNewMoon = newMoon
+      let nextNewMoon = preCalculatedNewMoons2019[idx + 1]
+      if (idx === preCalculatedNewMoons2019.length - 1) {
+        prevNewMoon = preCalculatedNewMoons2019[preCalculatedNewMoons2019.length - 2]
+        nextNewMoon = newMoon
+      }
+      const moonMoth = moonCalc.getMoonDaysBetweenNewMoons({ prevNewMoon, nextNewMoon, coordinates })
+      return moonMoth.length
+    })
+    const minMoonMonthLengths = min(moonMothLengths)
+    const maxMoonMonthLengths = max(moonMothLengths)
+
+    expect([minMoonMonthLengths, maxMoonMonthLengths].join(' ')).toBe('29 30')
+  })
+
+  describe('detecting moon trend', () => {
+    describe('after new moon', () => {
+      preCalculatedNewMoons2019.forEach(moon => {
+        test(moon.toFormat(dateFormat), () => {
+          expect(moonCalc.isBeforeFullMoonAt(moon.plus({ minutes: 1 }))).toBe(true)
+        })
+      })
+    })
+
+    describe('before new moon', () => {
+      preCalculatedNewMoons2019.forEach(moon => {
+        test(moon.toFormat(dateFormat), () => {
+          expect(moonCalc.isBeforeFullMoonAt(moon.minus({ minutes: 1 }))).toBe(false)
+        })
+      })
+    })
+
+    describe('at new moon', () => {
+      preCalculatedNewMoons2019.forEach(moon => {
+        test(moon.toFormat(dateFormat), () => {
+          expect(moonCalc.isBeforeFullMoonAt(moon)).toBe(true)
+        })
       })
     })
   })
 
-  describe('before new moon', () => {
-    preCalculatedNewMoons2019.forEach(moon => {
-      test(moon.toFormat(dateFormat), () => {
-        expect(moonCalc.isBeforeFullMoon(moon.minus({ minutes: 1 }))).toBe(false)
+  describe('new moon', () => {
+    describe('month edges', () => {
+      const timeShift = { unit: 'minutes', value: 1 }
+      describe('end of month', () => {
+        describe('prev moon', () => {
+          preCalculatedNewMoons2019.forEach((moon, idx) => {
+            let expectedPrevMoon = moon
+            let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
+            if (idx === preCalculatedNewMoons2019.length - 1) {
+              expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
+              expectedNextMoon = moon
+            }
+
+            test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
+              const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
+              const actualPrevMoon = moonCalc.getNewMoonDate({ startDate, isTravelingToPast: true })
+              expect(actualPrevMoon.toFormat(dateFormat)).toBe(expectedPrevMoon.toFormat(dateFormat))
+            })
+          })
+        })
+
+        describe('next moon', () => {
+          preCalculatedNewMoons2019.forEach((moon, idx) => {
+            let expectedPrevMoon = moon
+            let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
+            if (idx === preCalculatedNewMoons2019.length - 1) {
+              expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
+              expectedNextMoon = moon
+            }
+
+            test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
+              const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
+              const actualNextMoon = moonCalc.getNewMoonDate({ startDate })
+              expect(actualNextMoon.toFormat(dateFormat)).toBe(expectedNextMoon.toFormat(dateFormat))
+            })
+          })
+        })
+      })
+
+      describe('beginning of month', () => {
+        describe('prev moon', () => {
+          preCalculatedNewMoons2019.forEach((moon, idx) => {
+            let expectedPrevMoon = moon
+            let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
+            if (idx === preCalculatedNewMoons2019.length - 1) {
+              expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
+              expectedNextMoon = moon
+            }
+
+            test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
+              const startDate = expectedPrevMoon.plus({ [timeShift.unit]: timeShift.value })
+              const actualPrevMoon = moonCalc.getNewMoonDate({ startDate, isTravelingToPast: true })
+              expect(actualPrevMoon.toFormat(dateFormat)).toBe(expectedPrevMoon.toFormat(dateFormat))
+            })
+          })
+        })
+
+        describe('next moon', () => {
+          preCalculatedNewMoons2019.forEach((moon, idx) => {
+            let expectedPrevMoon = moon
+            let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
+            if (idx === preCalculatedNewMoons2019.length - 1) {
+              expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
+              expectedNextMoon = moon
+            }
+
+            test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
+              const startDate = expectedPrevMoon.plus({ [timeShift.unit]: timeShift.value })
+              const actualNextMoon = moonCalc.getNewMoonDate({ startDate })
+              expect(actualNextMoon.toFormat(dateFormat)).toBe(expectedNextMoon.toFormat(dateFormat))
+            })
+          })
+        })
       })
     })
-  })
 
-  describe('at new moon', () => {
-    preCalculatedNewMoons2019.forEach(moon => {
-      test(moon.toFormat(dateFormat), () => {
-        expect(moonCalc.isBeforeFullMoon(moon)).toBe(true)
-      })
-    })
-  })
-})
+    describe('middle of month', () => {
+      const timeShift = { unit: 'days', value: 15 }
 
-describe('new moon', () => {
-  describe('month edges', () => {
-    const timeShift = { unit: 'minutes', value: 1 }
-    describe('end of month', () => {
       describe('prev moon', () => {
         preCalculatedNewMoons2019.forEach((moon, idx) => {
           let expectedPrevMoon = moon
@@ -168,7 +243,9 @@ describe('new moon', () => {
       })
     })
 
-    describe('beginning of month', () => {
+    describe('moment of new moon', () => {
+      const timeShift = { unit: 'minutes', value: 0 }
+
       describe('prev moon', () => {
         preCalculatedNewMoons2019.forEach((moon, idx) => {
           let expectedPrevMoon = moon
@@ -179,9 +256,9 @@ describe('new moon', () => {
           }
 
           test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
-            const startDate = expectedPrevMoon.plus({ [timeShift.unit]: timeShift.value })
+            const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
             const actualPrevMoon = moonCalc.getNewMoonDate({ startDate, isTravelingToPast: true })
-            expect(actualPrevMoon.toFormat(dateFormat)).toBe(expectedPrevMoon.toFormat(dateFormat))
+            expect(actualPrevMoon.toFormat(dateFormat)).toBe(expectedNextMoon.toFormat(dateFormat))
           })
         })
       })
@@ -196,86 +273,10 @@ describe('new moon', () => {
           }
 
           test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
-            const startDate = expectedPrevMoon.plus({ [timeShift.unit]: timeShift.value })
+            const startDate = expectedPrevMoon.minus({ [timeShift.unit]: timeShift.value })
             const actualNextMoon = moonCalc.getNewMoonDate({ startDate })
             expect(actualNextMoon.toFormat(dateFormat)).toBe(expectedNextMoon.toFormat(dateFormat))
           })
-        })
-      })
-    })
-  })
-
-  describe('middle of month', () => {
-    const timeShift = { unit: 'days', value: 15 }
-
-    describe('prev moon', () => {
-      preCalculatedNewMoons2019.forEach((moon, idx) => {
-        let expectedPrevMoon = moon
-        let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
-        if (idx === preCalculatedNewMoons2019.length - 1) {
-          expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
-          expectedNextMoon = moon
-        }
-
-        test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
-          const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
-          const actualPrevMoon = moonCalc.getNewMoonDate({ startDate, isTravelingToPast: true })
-          expect(actualPrevMoon.toFormat(dateFormat)).toBe(expectedPrevMoon.toFormat(dateFormat))
-        })
-      })
-    })
-
-    describe('next moon', () => {
-      preCalculatedNewMoons2019.forEach((moon, idx) => {
-        let expectedPrevMoon = moon
-        let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
-        if (idx === preCalculatedNewMoons2019.length - 1) {
-          expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
-          expectedNextMoon = moon
-        }
-
-        test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
-          const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
-          const actualNextMoon = moonCalc.getNewMoonDate({ startDate })
-          expect(actualNextMoon.toFormat(dateFormat)).toBe(expectedNextMoon.toFormat(dateFormat))
-        })
-      })
-    })
-  })
-
-  describe('moment of new moon', () => {
-    const timeShift = { unit: 'minutes', value: 0 }
-
-    describe('prev moon', () => {
-      preCalculatedNewMoons2019.forEach((moon, idx) => {
-        let expectedPrevMoon = moon
-        let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
-        if (idx === preCalculatedNewMoons2019.length - 1) {
-          expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
-          expectedNextMoon = moon
-        }
-
-        test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
-          const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
-          const actualPrevMoon = moonCalc.getNewMoonDate({ startDate, isTravelingToPast: true })
-          expect(actualPrevMoon.toFormat(dateFormat)).toBe(expectedPrevMoon.toFormat(dateFormat))
-        })
-      })
-    })
-
-    describe('next moon', () => {
-      preCalculatedNewMoons2019.forEach((moon, idx) => {
-        let expectedPrevMoon = moon
-        let expectedNextMoon = preCalculatedNewMoons2019[idx + 1]
-        if (idx === preCalculatedNewMoons2019.length - 1) {
-          expectedPrevMoon = preCalculatedNewMoons2019[idx - 1]
-          expectedNextMoon = moon
-        }
-
-        test(`${expectedPrevMoon.toFormat(dateFormat)} - ${expectedNextMoon.toFormat(dateFormat)}`, () => {
-          const startDate = expectedNextMoon.minus({ [timeShift.unit]: timeShift.value })
-          const actualNextMoon = moonCalc.getNewMoonDate({ startDate })
-          expect(actualNextMoon.toFormat(dateFormat)).toBe(expectedNextMoon.toFormat(dateFormat))
         })
       })
     })

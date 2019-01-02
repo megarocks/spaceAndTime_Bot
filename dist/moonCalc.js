@@ -4,13 +4,29 @@ const d3_scale_1 = require("d3-scale");
 const lodash_1 = require("lodash");
 const luxon_1 = require("luxon");
 const suncalc_1 = require("suncalc");
+exports.isBeforeFullMoonAt = (moment) => {
+    const currentIllumination = suncalc_1.getMoonIllumination(moment.toJSDate()).fraction;
+    const nextMomentIllumination = suncalc_1.getMoonIllumination(moment.plus({ minutes: 1 }).toJSDate()).fraction;
+    return nextMomentIllumination > currentIllumination;
+};
 exports.getNewMoonDate = (params) => {
-    const { startDate } = params;
-    console.log(suncalc_1.getMoonIllumination(startDate.toJSDate()));
-    // TODO detect if its a month edge
-    // TODO detect if its end or start of month
+    const { startDate, isTravelingToPast } = params;
+    const isBeforeFullMoon = exports.isBeforeFullMoonAt(startDate);
     const moonIlluminationMoments = [];
-    for (let i = 0; i < 717 * 60; i++) { // up to 717 hours per lunar month
+    for (let i = 0; i < 717 * 60; i++) {
+        // up to 717 hours per lunar month
+        if (isBeforeFullMoon && !isTravelingToPast && i < 175 * 60) {
+            continue;
+        }
+        if (isBeforeFullMoon && isTravelingToPast && i >= 375 * 60) {
+            break;
+        }
+        if (!isBeforeFullMoon && !isTravelingToPast && i >= 375 * 60) {
+            break;
+        }
+        if (!isBeforeFullMoon && isTravelingToPast && i < 175 * 60) {
+            continue;
+        }
         const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i });
         if (params.anotherNewMoon) {
             const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 25;
@@ -77,18 +93,6 @@ exports.calculateMoonDayFor = (date, coordinates) => {
         nextNewMoon,
         prevNewMoon,
     });
-    // console.log('\n')
-    // // console.log(moonDays.map(md => ({ num: md.dayNumber, start: md.dayStart.toISO(), end: md.dayEnd.toISO() })))
-    // console.log({
-    //   prevNewMoon: prevNewMoon.toISO(),
-    //   nextNewMoon: nextNewMoon.toISO(),
-    //   calcDate: date.toISO(),
-    //   daysInMonth: moonDays.length,
-    //   minutesToPrevNewMoon: date.diff(prevNewMoon).as('minutes'),
-    //   minutesToNextNewMoon: nextNewMoon.diff(date).as('minutes'),
-    //   minutesBetweenMoons: nextNewMoon.diff(prevNewMoon).as('minutes'),
-    // })
-    // console.log('\n')
     return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd);
 };
 exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
@@ -105,9 +109,4 @@ exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
     ])
         .domain([1, 30]); // FIXME get number of days from current month
     return scale(dayNumber);
-};
-exports.isBeforeFullMoon = (moment) => {
-    const currentIllumination = suncalc_1.getMoonIllumination(moment.toJSDate()).fraction;
-    const nextMomentIllumination = suncalc_1.getMoonIllumination(moment.plus({ minutes: 1 }).toJSDate()).fraction;
-    return nextMomentIllumination > currentIllumination;
 };
