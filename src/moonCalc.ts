@@ -130,8 +130,8 @@ export const getMoonPhaseEmojiAndLabel = (dayNumber: number): IMoonPhase => {
   return scale(dayNumber)
 }
 
-export const isMoonMonthEdge = (date: DateTime): boolean => {
-  const illumination = getMoonIllumination(date.toJSDate()).fraction
-  console.log(illumination)
-  return illumination <= 0.016
+export const isBeforeFullMoon = (moment: DateTime): boolean => {
+  const currentIllumination = getMoonIllumination(moment.toJSDate()).fraction
+  const nextMomentIllumination = getMoonIllumination(moment.plus({ minutes: 1 }).toJSDate()).fraction
+  return nextMomentIllumination > currentIllumination
 }
