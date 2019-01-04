@@ -4,16 +4,40 @@ import { DateTime } from 'luxon'
 import { getMoonIllumination, getMoonTimes } from 'suncalc'
 import { IMoonDay, IMoonPhase } from './interfaces'
 
-const getNewMoonDate = (params: {
-  startDate: DateTime
-  shouldCalcPrevNewMoon?: boolean
-}): DateTime => {
-  const { startDate } = params
+export const isBeforeFullMoonAt = (moment: DateTime): boolean => {
+  const currentIllumination = getMoonIllumination(moment.toJSDate()).fraction
+  const nextMomentIllumination = getMoonIllumination(moment.plus({ minutes: 1 }).toJSDate()).fraction
+  return nextMomentIllumination > currentIllumination
+}
+
+export const getNewMoonDate = (params: { startDate: DateTime; isTravelingToPast?: boolean; anotherNewMoon?: DateTime }): DateTime => {
+  const { startDate, isTravelingToPast } = params
+
+  const isBeforeFullMoon = isBeforeFullMoonAt(startDate)
   const moonIlluminationMoments = []
-  for (let i = 0; i < 60 * 24 * 30; i++) {
-    const calculationMoment: DateTime = params.shouldCalcPrevNewMoon
-      ? startDate.minus({ minutes: i })
-      : startDate.plus({ minutes: i })
+  for (let i = 0; i < 717 * 60; i++) {
+    // up to 717 hours per lunar month
+    if (isBeforeFullMoon && !isTravelingToPast && i < 175 * 60) {
+      continue
+    }
+    if (isBeforeFullMoon && isTravelingToPast && i >= 375 * 60) {
+      break
+    }
+    if (!isBeforeFullMoon && !isTravelingToPast && i >= 375 * 60) {
+      break
+    }
+    if (!isBeforeFullMoon && isTravelingToPast && i < 175 * 60) {
+      continue
+    }
+
+    const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i })
+
+    if (params.anotherNewMoon) {
+      const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 25
+      if (shouldSkip) {
+        continue
+      }
+    }
 
     const moonIllumination = getMoonIllumination(calculationMoment.toJSDate())
 
@@ -22,6 +46,7 @@ const getNewMoonDate = (params: {
       moment: calculationMoment,
     })
   }
+
   const newMoon = minBy(moonIlluminationMoments, i => i.illuminationFraction)
   if (!newMoon) {
     throw new Error('can`t calculate new moon for: ' + startDate.toISO())
@@ -30,11 +55,7 @@ const getNewMoonDate = (params: {
   return newMoon.moment
 }
 
-const getMoonRisesBetween = (params: {
-  prevNewMoon: DateTime
-  nextNewMoon: DateTime
-  coordinates: { lat: number; lng: number }
-}): DateTime[] => {
+const getMoonRisesBetween = (params: { prevNewMoon: DateTime; nextNewMoon: DateTime; coordinates: { lat: number; lng: number } }): DateTime[] => {
   const {
     prevNewMoon,
     nextNewMoon,
@@ -44,23 +65,15 @@ const getMoonRisesBetween = (params: {
 
   moonRises.push(prevNewMoon.toISO()) // we use exact new moon moment as moon moth boundary
 
-  const hoursBetweenNewMoons = Math.floor(
-    nextNewMoon.diff(prevNewMoon, 'hours').hours
-  )
+  const hoursBetweenNewMoons = Math.floor(nextNewMoon.diff(prevNewMoon, 'hours').hours)
   for (let i = 0; i <= hoursBetweenNewMoons; i++) {
-    const moonTimesAtSomeMomentOfMonth = getMoonTimes(
-      prevNewMoon.plus({ hours: i }).toJSDate(),
-      lat,
-      lng,
-      true
-    )
+    const moonTimesAtSomeMomentOfMonth = getMoonTimes(prevNewMoon.plus({ hours: i }).toJSDate(), lat, lng, true)
+
     if (!moonTimesAtSomeMomentOfMonth.rise) {
       continue
     }
 
-    const moonRiseMoment = DateTime.fromJSDate(
-      moonTimesAtSomeMomentOfMonth.rise
-    )
+    const moonRiseMoment = DateTime.fromJSDate(moonTimesAtSomeMomentOfMonth.rise)
     if (moonRiseMoment >= prevNewMoon && moonRiseMoment <= nextNewMoon) {
       moonRises.push(moonRiseMoment.toISO())
     }
@@ -69,39 +82,40 @@ const getMoonRisesBetween = (params: {
   moonRises.push(nextNewMoon.toISO()) // we use exact new moon moment as moon moth boundary
 
   const uniqueMoonRises = uniq(moonRises)
-  return uniqueMoonRises.map(ISODate => DateTime.fromISO(ISODate))
+  return uniqueMoonRises.map(ISODate => DateTime.fromISO(ISODate).toUTC())
 }
 
-const convertMoonRisesToDays = (moonRises: DateTime[]): IMoonDay[] => {
-  const moonDays = []
-  for (let i = 0; i < moonRises.length - 1; i++) {
-    moonDays.push({
-      dayEnd: moonRises[i + 1],
-      dayNumber: i + 1,
-      dayStart: moonRises[i],
-    })
-  }
-  return moonDays
-}
-
-export const calculateMoonDayFor = (
-  date: DateTime,
-  coordinates: { lat: number; lng: number }
-): IMoonDay | undefined => {
-  const prevNewMoon = getNewMoonDate({
-    shouldCalcPrevNewMoon: true,
-    startDate: date,
-  })
-  const nextNewMoon = getNewMoonDate({ startDate: date })
-
-  const moonRisesAtSoughtMonth = getMoonRisesBetween({
+export const getMoonDaysBetweenNewMoons = (params: { prevNewMoon: DateTime; nextNewMoon: DateTime; coordinates: { lat: number; lng: number } }): IMoonDay[] => {
+  const { prevNewMoon, nextNewMoon, coordinates } = params
+  const moonRises = getMoonRisesBetween({
     coordinates,
     nextNewMoon,
     prevNewMoon,
   })
 
-  const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth)
+  const moonDays = []
+  for (let i = 0; i < moonRises.length - 1; i++) {
+    moonDays.push({
+      dayStart: moonRises[i],
+      dayEnd: moonRises[i + 1],
+      dayNumber: i + 1,
+    })
+  }
+  return moonDays
+}
 
+export const calculateMoonDayFor = (date: DateTime, coordinates: { lat: number; lng: number }): IMoonDay | undefined => {
+  const prevNewMoon = getNewMoonDate({
+    isTravelingToPast: true,
+    startDate: date,
+  })
+  const nextNewMoon = getNewMoonDate({ startDate: date, anotherNewMoon: prevNewMoon })
+
+  const moonDays = getMoonDaysBetweenNewMoons({
+    coordinates,
+    nextNewMoon,
+    prevNewMoon,
+  })
   return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd)
 }
 
@@ -117,7 +131,7 @@ export const getMoonPhaseEmojiAndLabel = (dayNumber: number): IMoonPhase => {
       { symbol: '🌗', label: 'третья четверть' },
       { symbol: '🌘', label: 'четвёртая фаза' },
     ])
-    .domain([1, 29]) // FIXME get number of days from current month
+    .domain([1, 30]) // FIXME get number of days from current month
 
   return scale(dayNumber)
 }

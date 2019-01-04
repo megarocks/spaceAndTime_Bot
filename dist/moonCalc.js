@@ -4,13 +4,36 @@ const d3_scale_1 = require("d3-scale");
 const lodash_1 = require("lodash");
 const luxon_1 = require("luxon");
 const suncalc_1 = require("suncalc");
-const getNewMoonDate = (params) => {
-    const { startDate } = params;
+exports.isBeforeFullMoonAt = (moment) => {
+    const currentIllumination = suncalc_1.getMoonIllumination(moment.toJSDate()).fraction;
+    const nextMomentIllumination = suncalc_1.getMoonIllumination(moment.plus({ minutes: 1 }).toJSDate()).fraction;
+    return nextMomentIllumination > currentIllumination;
+};
+exports.getNewMoonDate = (params) => {
+    const { startDate, isTravelingToPast } = params;
+    const isBeforeFullMoon = exports.isBeforeFullMoonAt(startDate);
     const moonIlluminationMoments = [];
-    for (let i = 0; i < 60 * 24 * 30; i++) {
-        const calculationMoment = params.shouldCalcPrevNewMoon
-            ? startDate.minus({ minutes: i })
-            : startDate.plus({ minutes: i });
+    for (let i = 0; i < 717 * 60; i++) {
+        // up to 717 hours per lunar month
+        if (isBeforeFullMoon && !isTravelingToPast && i < 175 * 60) {
+            continue;
+        }
+        if (isBeforeFullMoon && isTravelingToPast && i >= 375 * 60) {
+            break;
+        }
+        if (!isBeforeFullMoon && !isTravelingToPast && i >= 375 * 60) {
+            break;
+        }
+        if (!isBeforeFullMoon && isTravelingToPast && i < 175 * 60) {
+            continue;
+        }
+        const calculationMoment = params.isTravelingToPast ? startDate.minus({ minutes: i }) : startDate.plus({ minutes: i });
+        if (params.anotherNewMoon) {
+            const shouldSkip = Math.abs(params.anotherNewMoon.diff(calculationMoment).as('days')) < 25;
+            if (shouldSkip) {
+                continue;
+            }
+        }
         const moonIllumination = suncalc_1.getMoonIllumination(calculationMoment.toJSDate());
         moonIlluminationMoments.push({
             illuminationFraction: moonIllumination.fraction,
@@ -40,31 +63,36 @@ const getMoonRisesBetween = (params) => {
     }
     moonRises.push(nextNewMoon.toISO()); // we use exact new moon moment as moon moth boundary
     const uniqueMoonRises = lodash_1.uniq(moonRises);
-    return uniqueMoonRises.map(ISODate => luxon_1.DateTime.fromISO(ISODate));
+    return uniqueMoonRises.map(ISODate => luxon_1.DateTime.fromISO(ISODate).toUTC());
 };
-const convertMoonRisesToDays = (moonRises) => {
+exports.getMoonDaysBetweenNewMoons = (params) => {
+    const { prevNewMoon, nextNewMoon, coordinates } = params;
+    const moonRises = getMoonRisesBetween({
+        coordinates,
+        nextNewMoon,
+        prevNewMoon,
+    });
     const moonDays = [];
     for (let i = 0; i < moonRises.length - 1; i++) {
         moonDays.push({
+            dayStart: moonRises[i],
             dayEnd: moonRises[i + 1],
             dayNumber: i + 1,
-            dayStart: moonRises[i],
         });
     }
     return moonDays;
 };
 exports.calculateMoonDayFor = (date, coordinates) => {
-    const prevNewMoon = getNewMoonDate({
-        shouldCalcPrevNewMoon: true,
+    const prevNewMoon = exports.getNewMoonDate({
+        isTravelingToPast: true,
         startDate: date,
     });
-    const nextNewMoon = getNewMoonDate({ startDate: date });
-    const moonRisesAtSoughtMonth = getMoonRisesBetween({
+    const nextNewMoon = exports.getNewMoonDate({ startDate: date, anotherNewMoon: prevNewMoon });
+    const moonDays = exports.getMoonDaysBetweenNewMoons({
         coordinates,
         nextNewMoon,
         prevNewMoon,
     });
-    const moonDays = convertMoonRisesToDays(moonRisesAtSoughtMonth);
     return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd);
 };
 exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
@@ -79,6 +107,6 @@ exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
         { symbol: '🌗', label: 'третья четверть' },
         { symbol: '🌘', label: 'четвёртая фаза' },
     ])
-        .domain([1, 29]); // FIXME get number of days from current month
+        .domain([1, 30]); // FIXME get number of days from current month
     return scale(dayNumber);
 };
