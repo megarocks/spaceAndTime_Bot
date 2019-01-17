@@ -98,14 +98,14 @@ exports.calculateMoonDayFor = (date, coordinates) => {
 exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
     const scale = d3_scale_1.scaleQuantize()
         .range([
-        { symbol: '🌚', label: 'новолуние' },
-        { symbol: '🌒', label: 'первая фаза' },
+        { symbol: '🌚', label: 'новая луна' },
+        { symbol: '🌒', label: 'молодая луна' },
         { symbol: '🌓', label: 'первая четверть' },
-        { symbol: '🌔', label: 'вторая фаза' },
-        { symbol: '🌕', label: 'полнолуние' },
-        { symbol: '🌖', label: 'третья фаза' },
-        { symbol: '🌗', label: 'третья четверть' },
-        { symbol: '🌘', label: 'четвёртая фаза' },
+        { symbol: '🌔', label: 'прибывающая луна' },
+        { symbol: '🌕', label: 'полная луна' },
+        { symbol: '🌖', label: 'убывающая луна' },
+        { symbol: '🌗', label: 'последняя четверть' },
+        { symbol: '🌘', label: 'бальзамическая луна' },
     ])
         .domain([1, 30]); // FIXME get number of days from current month
     return scale(dayNumber);
