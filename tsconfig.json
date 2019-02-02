@@ -4,6 +4,7 @@
     "src/batchNotificator.ts",
     "src/moonCalc.ts",
     "src/utils.ts",
+    "gCalendar.ts",
     "src/declarations.d.ts",
     "src/interfaces.d.ts"
   ],

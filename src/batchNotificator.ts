@@ -190,6 +190,6 @@ async function createDbSavingJob(data: INotificationResult) {
 }
 
 main().then(() => {
-  console.log('\nmain finished')
+  console.log('main finished')
   process.exit()
 })

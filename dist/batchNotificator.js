@@ -175,6 +175,6 @@ function createDbSavingJob(data) {
     });
 }
 main().then(() => {
-    console.log('\nmain finished');
+    console.log('main finished');
     process.exit();
 });
