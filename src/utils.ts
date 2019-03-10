@@ -44,8 +44,15 @@ export function createSolarMessage({
 }
 
 export function createCalendarMessage(googleCalendarEvent: Schema$Event): string {
-  const { summary, description } = googleCalendarEvent
-  return summary + '\n' + description
+  const { summary = '', description = '' } = googleCalendarEvent
+  let message = ''
+  if (summary) {
+    message += summary
+  }
+  if (description) {
+    message += `\n${description}`
+  }
+  return message
 }
 
 export function createStartMessage(): string {

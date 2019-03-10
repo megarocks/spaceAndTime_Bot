@@ -27,8 +27,15 @@ function createSolarMessage({ sunRiseToday, sunSetToday, dayPercent, nightPercen
 }
 exports.createSolarMessage = createSolarMessage;
 function createCalendarMessage(googleCalendarEvent) {
-    const { summary, description } = googleCalendarEvent;
-    return summary + '\n' + description;
+    const { summary = '', description = '' } = googleCalendarEvent;
+    let message = '';
+    if (summary) {
+        message += summary;
+    }
+    if (description) {
+        message += `\n${description}`;
+    }
+    return message;
 }
 exports.createCalendarMessage = createCalendarMessage;
 function createStartMessage() {

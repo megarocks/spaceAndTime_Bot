@@ -216,7 +216,7 @@ function getSolarNewsMessage(options: { chat: IChat; calculationDate: DateTime; 
 async function getCalendarNewsMessage(options: { chat: IChat; calculationDate: DateTime }): Promise<string | undefined> {
   const { chat, calculationDate } = options
   if (chat.solarDateNotified && calculationDate.hasSame(DateTime.fromJSDate(chat.solarDateNotified), 'day')) {
-    debug('skipping to notify chat %s about calendar day: %s because it is already notified', chat.chatId, calculationDate.toISO())
+    debug('skipping to notify chat %s about calendar day %s because it is already notified', chat.chatId, calculationDate.toISO())
     return
   }
 
@@ -233,7 +233,13 @@ async function getCalendarNewsMessage(options: { chat: IChat; calculationDate: D
 
   const calendarEvents = await getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, calendarEventsStartDateTime, calendarEventsFinishDateTime)
 
-  const calendarMessages = calendarEvents.map(createCalendarMessage).join('\n')
+  const calendarMessages = calendarEvents.reduce((accumulatedString, event, index, allEvents) => {
+    let messageForCurrentEvent = createCalendarMessage(event)
+    if (index < allEvents.length - 1) {
+      messageForCurrentEvent += '\n\n'
+    }
+    return (accumulatedString += messageForCurrentEvent)
+  }, '')
 
   return calendarMessages
 }

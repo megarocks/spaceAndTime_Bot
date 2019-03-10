@@ -193,7 +193,7 @@ function getCalendarNewsMessage(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const { chat, calculationDate } = options;
         if (chat.solarDateNotified && calculationDate.hasSame(luxon_1.DateTime.fromJSDate(chat.solarDateNotified), 'day')) {
-            debug('skipping to notify chat %s about calendar day: %s because it is already notified', chat.chatId, calculationDate.toISO());
+            debug('skipping to notify chat %s about calendar day %s because it is already notified', chat.chatId, calculationDate.toISO());
             return;
         }
         const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), chat.location.coordinates[1], chat.location.coordinates[0]);
@@ -205,7 +205,13 @@ function getCalendarNewsMessage(options) {
         const calendarEventsStartDateTime = calculationDate.startOf('day');
         const calendarEventsFinishDateTime = calculationDate.endOf('day');
         const calendarEvents = yield gCalendar_1.getEvents(process.env.GOOGLE_ECO_CALENDAR_ID, calendarEventsStartDateTime, calendarEventsFinishDateTime);
-        const calendarMessages = calendarEvents.map(utils_1.createCalendarMessage).join('\n');
+        const calendarMessages = calendarEvents.reduce((accumulatedString, event, index, allEvents) => {
+            let messageForCurrentEvent = utils_1.createCalendarMessage(event);
+            if (index < allEvents.length - 1) {
+                messageForCurrentEvent += '\n\n';
+            }
+            return (accumulatedString += messageForCurrentEvent);
+        }, '');
         return calendarMessages;
     });
 }
