@@ -3,18 +3,18 @@ dotEnv.config()
 
 import createDebugger from 'debug'
 import { calendar_v3, google } from 'googleapis'
-import Schema$Event = calendar_v3.Schema$Event
 import { get } from 'lodash/fp'
 import { DateTime } from 'luxon'
 import Params$Resource$Events$List = calendar_v3.Params$Resource$Events$List
+import Schema$Event = calendar_v3.Schema$Event
 
 const debug = createDebugger(`astral_bot:google-calendar`)
 
-async function main() {
-  const startDateTime = DateTime.utc().startOf('day')
-  const finishDateTime = DateTime.utc().endOf('day')
-  return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
-}
+// async function main() {
+//   const startDateTime = DateTime.utc().startOf('day')
+//   const finishDateTime = DateTime.utc().endOf('day')
+//   return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
+// }
 
 export async function getEvents(calendarId: string, startDateTime: DateTime, finishDateTime: DateTime): Promise<Schema$Event[]> {
   try {
@@ -31,24 +31,26 @@ export async function getEvents(calendarId: string, startDateTime: DateTime, fin
     }
 
     debug('getting event with params: %O', eventsRequestParams)
-    const eventsResponse = await await calendarApi.events.list(eventsRequestParams)
+    const eventsResponse = await calendarApi.events.list(eventsRequestParams)
+    debug('got eventsResponse from google API')
+
     const events = get('data.items', eventsResponse) || []
     debug(`%d events are fetched: %O`, events.length, events)
 
     return events
   } catch (error) {
-    console.error(error)
+    debug(error)
     return []
   }
 }
 
-main()
-  .then(() => {
-    debug('main finished')
-    process.exit()
-  })
-  .catch(err => {
-    debug('error')
-    debug(err)
-    process.exit(1)
-  })
+// main()
+//   .then(() => {
+//     debug('main finished')
+//     process.exit()
+//   })
+//   .catch(err => {
+//     debug('error')
+//     debug(err)
+//     process.exit(1)
+//   })

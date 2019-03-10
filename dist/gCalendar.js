@@ -23,15 +23,12 @@ dotEnv.config();
 const debug_1 = __importDefault(require("debug"));
 const googleapis_1 = require("googleapis");
 const fp_1 = require("lodash/fp");
-const luxon_1 = require("luxon");
 const debug = debug_1.default(`astral_bot:google-calendar`);
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const startDateTime = luxon_1.DateTime.utc().startOf('day');
-        const finishDateTime = luxon_1.DateTime.utc().endOf('day');
-        return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID, startDateTime, finishDateTime);
-    });
-}
+// async function main() {
+//   const startDateTime = DateTime.utc().startOf('day')
+//   const finishDateTime = DateTime.utc().endOf('day')
+//   return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
+// }
 function getEvents(calendarId, startDateTime, finishDateTime) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -45,25 +42,26 @@ function getEvents(calendarId, startDateTime, finishDateTime) {
                 timeZone: 'UTC',
             };
             debug('getting event with params: %O', eventsRequestParams);
-            const eventsResponse = yield yield calendarApi.events.list(eventsRequestParams);
+            const eventsResponse = yield calendarApi.events.list(eventsRequestParams);
+            debug('got eventsResponse from google API');
             const events = fp_1.get('data.items', eventsResponse) || [];
             debug(`%d events are fetched: %O`, events.length, events);
             return events;
         }
         catch (error) {
-            console.error(error);
+            debug(error);
             return [];
         }
     });
 }
 exports.getEvents = getEvents;
-main()
-    .then(() => {
-    debug('main finished');
-    process.exit();
-})
-    .catch(err => {
-    debug('error');
-    debug(err);
-    process.exit(1);
-});
+// main()
+//   .then(() => {
+//     debug('main finished')
+//     process.exit()
+//   })
+//   .catch(err => {
+//     debug('error')
+//     debug(err)
+//     process.exit(1)
+//   })

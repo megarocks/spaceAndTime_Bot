@@ -26,6 +26,11 @@ function createSolarMessage({ sunRiseToday, sunSetToday, dayPercent, nightPercen
 🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`;
 }
 exports.createSolarMessage = createSolarMessage;
+function createCalendarMessage(googleCalendarEvent) {
+    const { summary, description } = googleCalendarEvent;
+    return summary + '\n' + description;
+}
+exports.createCalendarMessage = createCalendarMessage;
 function createStartMessage() {
     return `Привет
 Буду оповещать тебя о начале нового лунного дня и месяца, фазах луны, и других натуральных циклах нашей планеты

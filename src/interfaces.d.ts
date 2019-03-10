@@ -13,7 +13,7 @@ export interface IMoonDay {
 }
 
 export interface IMoonPhase {
-  symbol: string,
+  symbol: string
   label: string
 }
 
@@ -24,11 +24,13 @@ export interface IChat {
     coordinates: [number, number]
   }
   moonDayNotified?: number
-  solarDateNotified?: Date
+  solarDateNotified?: Date,
+  calendarDateNotified?: Date
 }
 
 export interface INotificationResult {
   chatId: number
   moonDayNotified?: number
   solarDateNotified?: Date
+  calendarDateNotified?: Date
 }

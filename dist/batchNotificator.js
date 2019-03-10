@@ -25,8 +25,11 @@ const luxon_1 = require("luxon");
 const mongodb_1 = require("mongodb");
 const request_promise_native_1 = __importDefault(require("request-promise-native"));
 const suncalc_1 = __importDefault(require("suncalc"));
+const debug_1 = __importDefault(require("debug"));
 const moonCalc_1 = require("./moonCalc");
 const utils_1 = require("./utils");
+const gCalendar_1 = require("./gCalendar");
+const debug = debug_1.default(`astral_bot:notificator`);
 const mongoUri = process.env.MONGODB_URI || '';
 let db;
 function main() {
@@ -34,24 +37,37 @@ function main() {
         try {
             const mongoClient = yield mongodb_1.MongoClient.connect(mongoUri, { useNewUrlParser: true });
             db = mongoClient.db();
+            debug('database connected: ', mongoUri);
             const chatsCollection = db.collection('chats');
             const chats = yield chatsCollection.find({}).toArray();
-            const notificationJobs = chats.map(createNotificationJob);
-            const notificationResults = yield Promise.all(notificationJobs);
+            debug('%d chats are fetched from collection', chats.length);
+            const notificationJobs = chats.map(chat => createNotificationJob(chat));
+            debug('%d notification jobs are scheduled', notificationJobs.length);
+            const notificationResults = yield Promise.all(notificationJobs.map(notificationJob => notificationJob()));
+            debug('%d notification jobs are performed', notificationResults.length);
             const successfulNotificationResults = notificationResults.filter(sr => !!sr);
-            console.log(`${successfulNotificationResults.length} notifications successfully sent`);
+            debug('%d SUCCESSFUL notification results', successfulNotificationResults.length);
+            if (!successfulNotificationResults.length) {
+                return;
+            }
             const resultsSavingJobs = successfulNotificationResults.map(createDbSavingJob);
+            debug('%d resultsSavingJobs are scheduled', resultsSavingJobs.length);
+            if (!resultsSavingJobs.length) {
+                return;
+            }
             yield Promise.all(resultsSavingJobs);
+            debug('notification results are saved into DB');
         }
         catch (e) {
-            console.error('Error while performing batch sending');
-            console.error(e);
+            debug('Error while performing batch sending');
+            debug(e);
         }
     });
 }
 function createNotificationJob(chat) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return () => __awaiter(this, void 0, void 0, function* () {
         try {
+            debug('creating notification job for chat: %O', chat);
             const { chatId, location: { coordinates: [lng = null, lat = null] = [] } = {} } = chat;
             if (!lat || !lng) {
                 throw new Error(`no coordinates for chat: ${chatId}`);
@@ -76,6 +92,7 @@ function createNotificationJob(chat) {
                 timeZone,
             });
             messagesArray.push(solarRelatedMessage);
+            debug('solar related message: ', solarRelatedMessage);
             // moon message
             const moonDay = moonCalc_1.calculateMoonDayFor(calculationDate, { lng, lat });
             const moonRelatedMessage = getMoonNewsMessage({
@@ -84,12 +101,19 @@ function createNotificationJob(chat) {
                 timeZone,
             });
             messagesArray.push(moonRelatedMessage);
+            debug('moon Related Message: ', moonRelatedMessage);
+            // google calendar message
+            const calendarMessages = yield getCalendarNewsMessage({ chat, calculationDate });
+            messagesArray.push(calendarMessages);
+            debug('calendar messages: ', calendarMessages);
             // final message
             const meaningFullMessages = messagesArray.filter(m => m);
             if (meaningFullMessages.length < 2) {
+                debug('no news to send to the chat; returning undefined from createNotificationJob');
                 return;
             } // if no messages or only common message - no sense to send
             const reportMessage = meaningFullMessages.join('\n');
+            debug('final message: ', reportMessage);
             const recipientTime = calculationDate.setZone(timeZone);
             // send request
             const requestOptions = {
@@ -104,6 +128,7 @@ function createNotificationJob(chat) {
                 simple: false,
                 uri: `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`,
             };
+            debug('going to send notification with request options: %O', requestOptions);
             const response = yield request_promise_native_1.default(requestOptions);
             // send results
             if (!response.ok) {
@@ -112,7 +137,7 @@ function createNotificationJob(chat) {
             const notificationResult = {
                 chatId,
             };
-            if (solarRelatedMessage) {
+            if (solarRelatedMessage || calendarMessages) {
                 notificationResult.solarDateNotified = calculationDate.toJSDate();
             }
             if (moonDay && moonRelatedMessage) {
@@ -121,8 +146,8 @@ function createNotificationJob(chat) {
             return notificationResult;
         }
         catch (e) {
-            console.log('Error while sending message');
-            console.error(e.message);
+            debug('Error while sending message');
+            debug(e.message);
         }
     });
 }
@@ -133,13 +158,15 @@ function getMoonNewsMessage(options) {
         return;
     }
     if (chat.moonDayNotified === moonDay.dayNumber) {
+        debug('chat %s is already notified about moon day: %d', chat.chatId, moonDay.dayNumber);
         return;
     } // means already notified
     return utils_1.createMoonMessage({ moonDay, timeZone });
 }
 function getSolarNewsMessage(options) {
-    const { chat: { location: { coordinates: [lng, lat], }, solarDateNotified, }, calculationDate, timeZone, } = options;
+    const { chat: { chatId, location: { coordinates: [lng, lat], }, solarDateNotified, }, calculationDate, timeZone, } = options;
     if (solarDateNotified && calculationDate.hasSame(luxon_1.DateTime.fromJSDate(solarDateNotified), 'day')) {
+        debug('skipping to notify chat %s; it is already notified about solar day: %s', chatId, solarDateNotified.toISOString());
         return;
     }
     const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), lat, lng);
@@ -147,6 +174,7 @@ function getSolarNewsMessage(options) {
     const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);
     const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes']);
     if (calculationDate < sunRiseToday) {
+        debug('skipping to notify chat %s about solar day: %s because to early', chatId, calculationDate.toISO());
         return;
     } // sunrise should be already there
     const sunTimesYesterday = suncalc_1.default.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng);
@@ -161,9 +189,30 @@ function getSolarNewsMessage(options) {
         timeZone,
     });
 }
+function getCalendarNewsMessage(options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { chat, calculationDate } = options;
+        if (chat.solarDateNotified && calculationDate.hasSame(luxon_1.DateTime.fromJSDate(chat.solarDateNotified), 'day')) {
+            debug('skipping to notify chat %s about calendar day: %s because it is already notified', chat.chatId, calculationDate.toISO());
+            return;
+        }
+        const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), chat.location.coordinates[1], chat.location.coordinates[0]);
+        const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
+        if (calculationDate < sunRiseToday) {
+            debug('skipping to notify chat %s about calendar day: %s because to early', chat.chatId, calculationDate.toISO());
+            return;
+        } // sunrise should be already there
+        const calendarEventsStartDateTime = calculationDate.startOf('day');
+        const calendarEventsFinishDateTime = calculationDate.endOf('day');
+        const calendarEvents = yield gCalendar_1.getEvents(process.env.GOOGLE_ECO_CALENDAR_ID, calendarEventsStartDateTime, calendarEventsFinishDateTime);
+        const calendarMessages = calendarEvents.map(utils_1.createCalendarMessage).join('\n');
+        return calendarMessages;
+    });
+}
 function createDbSavingJob(data) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            debug('creating saving job with data: %O', data);
             return db.collection('chats').updateOne({ chatId: data.chatId }, {
                 $set: data,
             });
@@ -175,6 +224,6 @@ function createDbSavingJob(data) {
     });
 }
 main().then(() => {
-    console.log('main finished');
+    debug('main finished');
     process.exit();
 });

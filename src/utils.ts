@@ -1,6 +1,9 @@
 import { DateTime } from 'luxon'
-import { IMoonDay } from './interfaces'
+import { calendar_v3 } from 'googleapis'
+import Schema$Event = calendar_v3.Schema$Event
+
 import { getMoonPhaseEmojiAndLabel } from './moonCalc'
+import { IMoonDay } from './interfaces'
 
 export function createMoonMessage({ moonDay, timeZone }: { moonDay: IMoonDay; timeZone: string }): string {
   const { dayNumber, dayStart, dayEnd } = moonDay
@@ -38,6 +41,11 @@ export function createSolarMessage({
 🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
 🏙️ дня:\t ${dayPercent.toFixed(1)} %
 🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`
+}
+
+export function createCalendarMessage(googleCalendarEvent: Schema$Event): string {
+  const { summary, description } = googleCalendarEvent
+  return summary + '\n' + description
 }
 
 export function createStartMessage(): string {
