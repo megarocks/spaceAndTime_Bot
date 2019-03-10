@@ -14,18 +14,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotEnv = __importStar(require("dotenv"));
 dotEnv.config();
+const debug_1 = __importDefault(require("debug"));
 const googleapis_1 = require("googleapis");
 const fp_1 = require("lodash/fp");
 const luxon_1 = require("luxon");
+const debug = debug_1.default(`astral_bot:google-calendar`);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const startDateTime = luxon_1.DateTime.utc().startOf('day');
         const finishDateTime = luxon_1.DateTime.utc().endOf('day');
-        const events = yield getEvents(process.env.GOOGLE_ECO_CALENDAR_ID, startDateTime, finishDateTime);
-        console.log(events);
+        return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID, startDateTime, finishDateTime);
     });
 }
 function getEvents(calendarId, startDateTime, finishDateTime) {
@@ -40,8 +44,11 @@ function getEvents(calendarId, startDateTime, finishDateTime) {
                 timeMax: finishDateTime.toISO(),
                 timeZone: 'UTC',
             };
+            debug('getting event with params: %O', eventsRequestParams);
             const eventsResponse = yield yield calendarApi.events.list(eventsRequestParams);
-            return fp_1.get('data.items', eventsResponse) || [];
+            const events = fp_1.get('data.items', eventsResponse) || [];
+            debug(`%d events are fetched: %O`, events.length, events);
+            return events;
         }
         catch (error) {
             console.error(error);
@@ -52,10 +59,11 @@ function getEvents(calendarId, startDateTime, finishDateTime) {
 exports.getEvents = getEvents;
 main()
     .then(() => {
-    console.log('main finished');
+    debug('main finished');
     process.exit();
 })
     .catch(err => {
-    console.log(err);
+    debug('error');
+    debug(err);
     process.exit(1);
 });

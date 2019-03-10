@@ -6,10 +6,12 @@
   "license": "MIT",
   "dependencies": {
     "@google/maps": "^0.5.5",
+    "@types/debug": "^4.1.2",
     "@types/jest": "^23.3.10",
     "@types/koa": "^2.0.47",
     "@types/koa-route": "^3.2.4",
     "d3-scale": "^2.1.2",
+    "debug": "^4.1.1",
     "dotenv": "^6.1.0",
     "full-icu": "^1.2.1",
     "geo-tz": "^5.0.0",
@@ -37,7 +39,8 @@
     "start:prod": "NODE_ICU_DATA=$(pwd)/node_modules/full-icu micro-bot dist/main.js -p $PORT",
     "build": "tsc --build --verbose",
     "send-notifications": "NODE_ICU_DATA=$(pwd)/node_modules/full-icu node dist/batchNotificator.js",
-    "test": "jest"
+    "test": "jest",
+    "calendar:events:dump": "DEBUG=astral_bot:* node ./dist/gCalendar.js"
   },
   "devDependencies": {
     "@types/d3-scale": "^2.1.0",

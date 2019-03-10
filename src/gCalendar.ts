@@ -1,17 +1,19 @@
 import * as dotEnv from 'dotenv'
 dotEnv.config()
 
+import createDebugger from 'debug'
 import { calendar_v3, google } from 'googleapis'
 import Schema$Event = calendar_v3.Schema$Event
 import { get } from 'lodash/fp'
 import { DateTime } from 'luxon'
 import Params$Resource$Events$List = calendar_v3.Params$Resource$Events$List
 
+const debug = createDebugger(`astral_bot:google-calendar`)
+
 async function main() {
   const startDateTime = DateTime.utc().startOf('day')
   const finishDateTime = DateTime.utc().endOf('day')
-  const events = await getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
-  console.log(events)
+  return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
 }
 
 export async function getEvents(calendarId: string, startDateTime: DateTime, finishDateTime: DateTime): Promise<Schema$Event[]> {
@@ -27,9 +29,13 @@ export async function getEvents(calendarId: string, startDateTime: DateTime, fin
       timeMax: finishDateTime.toISO(),
       timeZone: 'UTC',
     }
-    const eventsResponse = await await calendarApi.events.list(eventsRequestParams)
 
-    return get('data.items', eventsResponse) || []
+    debug('getting event with params: %O', eventsRequestParams)
+    const eventsResponse = await await calendarApi.events.list(eventsRequestParams)
+    const events = get('data.items', eventsResponse) || []
+    debug(`%d events are fetched: %O`, events.length, events)
+
+    return events
   } catch (error) {
     console.error(error)
     return []
@@ -38,10 +44,11 @@ export async function getEvents(calendarId: string, startDateTime: DateTime, fin
 
 main()
   .then(() => {
-    console.log('main finished')
+    debug('main finished')
     process.exit()
   })
   .catch(err => {
-    console.log(err)
+    debug('error')
+    debug(err)
     process.exit(1)
   })
