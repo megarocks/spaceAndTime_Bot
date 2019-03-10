@@ -13,7 +13,7 @@ export interface IMoonDay {
 }
 
 export interface IMoonPhase {
-  symbol: string,
+  symbol: string
   label: string
 }
 
