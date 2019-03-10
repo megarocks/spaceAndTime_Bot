@@ -24,11 +24,6 @@ const debug_1 = __importDefault(require("debug"));
 const googleapis_1 = require("googleapis");
 const fp_1 = require("lodash/fp");
 const debug = debug_1.default(`astral_bot:google-calendar`);
-// async function main() {
-//   const startDateTime = DateTime.utc().startOf('day')
-//   const finishDateTime = DateTime.utc().endOf('day')
-//   return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
-// }
 function getEvents(calendarId, startDateTime, finishDateTime) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -55,13 +50,3 @@ function getEvents(calendarId, startDateTime, finishDateTime) {
     });
 }
 exports.getEvents = getEvents;
-// main()
-//   .then(() => {
-//     debug('main finished')
-//     process.exit()
-//   })
-//   .catch(err => {
-//     debug('error')
-//     debug(err)
-//     process.exit(1)
-//   })

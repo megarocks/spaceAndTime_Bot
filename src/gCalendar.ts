@@ -10,12 +10,6 @@ import Schema$Event = calendar_v3.Schema$Event
 
 const debug = createDebugger(`astral_bot:google-calendar`)
 
-// async function main() {
-//   const startDateTime = DateTime.utc().startOf('day')
-//   const finishDateTime = DateTime.utc().endOf('day')
-//   return getEvents(process.env.GOOGLE_ECO_CALENDAR_ID as string, startDateTime, finishDateTime)
-// }
-
 export async function getEvents(calendarId: string, startDateTime: DateTime, finishDateTime: DateTime): Promise<Schema$Event[]> {
   try {
     const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CALENDAR_CLIENT_ID, process.env.GOOGLE_CALENDAR_CLIENT_SECRET)
@@ -43,14 +37,3 @@ export async function getEvents(calendarId: string, startDateTime: DateTime, fin
     return []
   }
 }
-
-// main()
-//   .then(() => {
-//     debug('main finished')
-//     process.exit()
-//   })
-//   .catch(err => {
-//     debug('error')
-//     debug(err)
-//     process.exit(1)
-//   })

@@ -24,13 +24,11 @@ export interface IChat {
     coordinates: [number, number]
   }
   moonDayNotified?: number
-  solarDateNotified?: Date,
-  calendarDateNotified?: Date
+  solarDateNotified?: Date
 }
 
 export interface INotificationResult {
   chatId: number
   moonDayNotified?: number
   solarDateNotified?: Date
-  calendarDateNotified?: Date
 }
