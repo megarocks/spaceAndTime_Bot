@@ -12,14 +12,16 @@ export function createMoonMessage({ moonDay, timeZone }: { moonDay: IMoonDay; ti
 
   return `🌝 Луна:
 ${symbol} день: *${dayNumber}* - ${label}
-🔁 начало: _${dayStart
+🎭 тип дня: _${getMoonDayType(moonDay.dayNumber)}_
+🚦 начинания: _${getBeginningsRecommendation(moonDay.dayNumber)}_  
+⏳ начало: _${dayStart
     .setZone(timeZone)
     .setLocale('ru')
     .toLocaleString(DateTime.DATETIME_SHORT)}_
-🔁 завершение: _${dayEnd
+⌛️ завершение: _${dayEnd
     .setZone(timeZone)
     .setLocale('ru')
-    .toLocaleString(DateTime.DATETIME_SHORT)}_
+    .toLocaleString(DateTime.DATETIME_SHORT)}_  
 `
 }
 
@@ -74,4 +76,22 @@ export function createHelpMessage(): string {
 export function getPercentRelation(values: number[]): number[] {
   const hundredPercent = values.reduce((acc, val) => acc + val, 0)
   return values.map(value => (value * 100) / hundredPercent)
+}
+
+function getMoonDayType(moonDayNumber: number): string {
+  if ([1, 6, 11, 16, 21, 26].indexOf(moonDayNumber) > -1) return 'удовлетворение 👌'
+  if ([2, 7, 12, 17, 22, 27].indexOf(moonDayNumber) > -1) return 'мудрец 🤝'
+  if ([3, 8, 13, 18, 23, 28].indexOf(moonDayNumber) > -1) return 'победитель ✊'
+  if ([4, 9, 14, 19, 24, 29].indexOf(moonDayNumber) > -1) return 'пустые руки 🤲'
+  if ([5, 10, 15, 20, 25, 30].indexOf(moonDayNumber) > -1) return 'полнота 🙏'
+  return 'неизвестно'
+}
+
+function getBeginningsRecommendation(moonDayNumber: number): string {
+  if ([1, 6, 11, 16, 21, 26].indexOf(moonDayNumber) > -1) return 'норма ⏯️'
+  if ([2, 7, 12, 17, 22, 27].indexOf(moonDayNumber) > -1) return 'норма ⏯️'
+  if ([3, 8, 13, 18, 23, 28].indexOf(moonDayNumber) > -1) return 'хорошо ▶️'
+  if ([4, 9, 14, 19, 24, 29].indexOf(moonDayNumber) > -1) return 'такое ⏸'
+  if ([5, 10, 15, 20, 25, 30].indexOf(moonDayNumber) > -1) return 'хорошо ▶️'
+  return 'неизвестно'
 }
