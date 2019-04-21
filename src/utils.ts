@@ -79,11 +79,11 @@ export function getPercentRelation(values: number[]): number[] {
 }
 
 function getMoonDayType(moonDayNumber: number): string {
-  if ([1, 6, 11, 16, 21, 26].indexOf(moonDayNumber) > -1) return 'Удовлетворениет 👌'
-  if ([2, 7, 12, 17, 22, 27].indexOf(moonDayNumber) > -1) return 'Мудрец 🤝'
-  if ([3, 8, 13, 18, 23, 28].indexOf(moonDayNumber) > -1) return 'Победитель ✊'
-  if ([4, 9, 14, 19, 24, 29].indexOf(moonDayNumber) > -1) return 'Пустые руки 🤲'
-  if ([5, 10, 15, 20, 25, 30].indexOf(moonDayNumber) > -1) return 'Полнота 🙏'
+  if ([1, 6, 11, 16, 21, 26].indexOf(moonDayNumber) > -1) return 'удовлетворение 👌'
+  if ([2, 7, 12, 17, 22, 27].indexOf(moonDayNumber) > -1) return 'мудрец 🤝'
+  if ([3, 8, 13, 18, 23, 28].indexOf(moonDayNumber) > -1) return 'победитель ✊'
+  if ([4, 9, 14, 19, 24, 29].indexOf(moonDayNumber) > -1) return 'пустые руки 🤲'
+  if ([5, 10, 15, 20, 25, 30].indexOf(moonDayNumber) > -1) return 'полнота 🙏'
   return 'неизвестно'
 }
 
