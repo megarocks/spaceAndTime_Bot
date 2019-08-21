@@ -1,9 +1,11 @@
-import { DateTime } from 'luxon'
+import { DateTime, Duration } from 'luxon'
 import { calendar_v3 } from 'googleapis'
 import Schema$Event = calendar_v3.Schema$Event
+import { noun } from 'plural-ru'
 
 import { getMoonPhaseEmojiAndLabel } from './moonCalc'
 import { IMoonDay } from './interfaces'
+import { GetTimesResult } from 'suncalc'
 
 export function createMoonMessage({ moonDay, timeZone }: { moonDay: IMoonDay; timeZone: string }): string {
   const { dayNumber, dayStart, dayEnd } = moonDay
@@ -28,21 +30,18 @@ ${symbol} день: *${dayNumber}* - ${label}
 export function createSolarMessage({
   sunRiseToday,
   sunSetToday,
-  dayPercent,
-  nightPercent,
+  dayDurationDiff,
   timeZone,
 }: {
   sunRiseToday: DateTime
   sunSetToday: DateTime
-  dayPercent: number
-  nightPercent: number
+  dayDurationDiff: Duration,
   timeZone: string
 }): string {
-  return `☀️ Солнце:
-🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
-🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)}
-🏙️ дня:\t ${dayPercent.toFixed(1)} %
-🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`
+  const dayLength = sunSetToday.diff(sunRiseToday)
+  return `☀️ Световой день:
+🌅 ${sunRiseToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)} - ${sunSetToday.setZone(timeZone).toLocaleString(DateTime.TIME_24_SIMPLE)} (${getDayDurationMsg(dayLength)})
+⏱ ${getDayDurationDiffMsg(dayDurationDiff)}\n`
 }
 
 export function createCalendarMessage(googleCalendarEvent: Schema$Event): string {
@@ -73,11 +72,6 @@ export function createHelpMessage(): string {
   )
 }
 
-export function getPercentRelation(values: number[]): number[] {
-  const hundredPercent = values.reduce((acc, val) => acc + val, 0)
-  return values.map(value => (value * 100) / hundredPercent)
-}
-
 function getMoonDayType(moonDayNumber: number): string {
   if ([1, 6, 11, 16, 21, 26].indexOf(moonDayNumber) > -1) return 'удовлетворение 👌'
   if ([2, 7, 12, 17, 22, 27].indexOf(moonDayNumber) > -1) return 'мудрец 🤝'
@@ -94,4 +88,31 @@ function getBeginningsRecommendation(moonDayNumber: number): string {
   if ([4, 9, 14, 19, 24, 29].indexOf(moonDayNumber) > -1) return 'такое ⏸'
   if ([5, 10, 15, 20, 25, 30].indexOf(moonDayNumber) > -1) return 'хорошо ▶️'
   return 'неизвестно'
+}
+
+export function getDayDurationDifference(sunTimesToday: GetTimesResult, sunTimesYtd: GetTimesResult): Duration {
+  const sunRiseToday = DateTime.fromJSDate(sunTimesToday.sunrise)
+  const sunSetToday = DateTime.fromJSDate(sunTimesToday.sunset)
+  const dayLengthToday = sunSetToday.diff(sunRiseToday)
+
+  const sunRiseYtd = DateTime.fromJSDate(sunTimesYtd.sunrise)
+  const sunSetYtd = DateTime.fromJSDate(sunTimesYtd.sunset)
+  const dayLengthYtd = sunSetYtd.diff(sunRiseYtd)
+
+  return dayLengthToday.minus(dayLengthYtd)
+}
+
+function getDayDurationDiffMsg(duration: Duration): string {
+  const directionWord = duration.as('milliseconds') > 0 ? 'больше' : 'меньше'
+  let { minutes, seconds } = duration.shiftTo('minutes', 'seconds')
+  minutes = Math.ceil(Math.abs(minutes))
+  seconds = Math.ceil(Math.abs(seconds))
+  return `день на ${minutes} ${noun(minutes, 'минута', 'минуты', 'минут')} ${seconds} ${noun(seconds, 'секунда', 'секунды', 'секунд')} ${directionWord} чем вчера`
+}
+
+function getDayDurationMsg(duration: Duration): string {
+  let { hours, minutes } = duration.shiftTo('hours', 'minutes')
+  hours = Math.ceil(Math.abs(hours))
+  minutes = Math.ceil(Math.abs(minutes))
+  return `${hours} ${noun(minutes, 'час', 'часа', 'часов')} ${minutes} ${noun(minutes, 'минута', 'минуты', 'минут')}`
 }

@@ -10,7 +10,7 @@ import createDebugger from 'debug'
 
 import { IChat, IMoonDay, INotificationResult } from './interfaces'
 import { calculateMoonDayFor } from './moonCalc'
-import { createCalendarMessage, createMoonMessage, createSolarMessage, getPercentRelation } from './utils'
+import { createCalendarMessage, createMoonMessage, createSolarMessage, getDayDurationDifference } from './utils'
 import { getEvents } from './gCalendar'
 
 const debug = createDebugger(`astral_bot:notificator`)
@@ -191,7 +191,6 @@ function getSolarNewsMessage(options: { chat: IChat; calculationDate: DateTime; 
   const sunTimesToday = SunCalc.getTimes(calculationDate.toJSDate(), lat, lng)
   const sunRiseToday = DateTime.fromJSDate(sunTimesToday.sunrise)
   const sunSetToday = DateTime.fromJSDate(sunTimesToday.sunset)
-  const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes'])
 
   if (calculationDate < sunRiseToday) {
     debug('skipping to notify chat %s about solar day: %s because to early', chatId, calculationDate.toISO())
@@ -199,14 +198,11 @@ function getSolarNewsMessage(options: { chat: IChat; calculationDate: DateTime; 
   } // sunrise should be already there
 
   const sunTimesYesterday = SunCalc.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng)
-  const sunSetYtd = DateTime.fromJSDate(sunTimesYesterday.sunset)
-  const nightLength = sunRiseToday.diff(sunSetYtd, ['hours', 'minutes'])
 
-  const [dayPercent, nightPercent] = getPercentRelation([dayLength.as('milliseconds'), nightLength.as('milliseconds')])
+  const dayDurationDiff = getDayDurationDifference(sunTimesToday, sunTimesYesterday)
 
   return createSolarMessage({
-    dayPercent,
-    nightPercent,
+    dayDurationDiff,
     sunRiseToday,
     sunSetToday,
     timeZone,

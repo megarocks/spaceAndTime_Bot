@@ -172,18 +172,14 @@ function getSolarNewsMessage(options) {
     const sunTimesToday = suncalc_1.default.getTimes(calculationDate.toJSDate(), lat, lng);
     const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
     const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);
-    const dayLength = sunSetToday.diff(sunRiseToday, ['hours', 'minutes']);
     if (calculationDate < sunRiseToday) {
         debug('skipping to notify chat %s about solar day: %s because to early', chatId, calculationDate.toISO());
         return;
     } // sunrise should be already there
     const sunTimesYesterday = suncalc_1.default.getTimes(calculationDate.minus({ days: 1 }).toJSDate(), lat, lng);
-    const sunSetYtd = luxon_1.DateTime.fromJSDate(sunTimesYesterday.sunset);
-    const nightLength = sunRiseToday.diff(sunSetYtd, ['hours', 'minutes']);
-    const [dayPercent, nightPercent] = utils_1.getPercentRelation([dayLength.as('milliseconds'), nightLength.as('milliseconds')]);
+    const dayDurationDiff = utils_1.getDayDurationDifference(sunTimesToday, sunTimesYesterday);
     return utils_1.createSolarMessage({
-        dayPercent,
-        nightPercent,
+        dayDurationDiff,
         sunRiseToday,
         sunSetToday,
         timeZone,

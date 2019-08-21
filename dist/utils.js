@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const luxon_1 = require("luxon");
+const plural_ru_1 = require("plural-ru");
 const moonCalc_1 = require("./moonCalc");
 function createMoonMessage({ moonDay, timeZone }) {
     const { dayNumber, dayStart, dayEnd } = moonDay;
@@ -20,12 +21,11 @@ ${symbol} день: *${dayNumber}* - ${label}
 `;
 }
 exports.createMoonMessage = createMoonMessage;
-function createSolarMessage({ sunRiseToday, sunSetToday, dayPercent, nightPercent, timeZone, }) {
-    return `☀️ Солнце:
-🌅 восход:\t ${sunRiseToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
-🌇 закат:\t ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)}
-🏙️ дня:\t ${dayPercent.toFixed(1)} %
-🌃 ночи:\t ${nightPercent.toFixed(1)} %\n`;
+function createSolarMessage({ sunRiseToday, sunSetToday, dayDurationDiff, timeZone, }) {
+    const dayLength = sunSetToday.diff(sunRiseToday);
+    return `☀️ Световой день:
+🌅 ${sunRiseToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)} - ${sunSetToday.setZone(timeZone).toLocaleString(luxon_1.DateTime.TIME_24_SIMPLE)} (${getDayDurationMsg(dayLength)})
+⏱ ${getDayDurationDiffMsg(dayDurationDiff)}\n`;
 }
 exports.createSolarMessage = createSolarMessage;
 function createCalendarMessage(googleCalendarEvent) {
@@ -54,11 +54,6 @@ function createHelpMessage() {
         'Если не удаётся отправить локацию, проверь в настройках, что у телеграм есть доступ к gps');
 }
 exports.createHelpMessage = createHelpMessage;
-function getPercentRelation(values) {
-    const hundredPercent = values.reduce((acc, val) => acc + val, 0);
-    return values.map(value => (value * 100) / hundredPercent);
-}
-exports.getPercentRelation = getPercentRelation;
 function getMoonDayType(moonDayNumber) {
     if ([1, 6, 11, 16, 21, 26].indexOf(moonDayNumber) > -1)
         return 'удовлетворение 👌';
@@ -84,4 +79,27 @@ function getBeginningsRecommendation(moonDayNumber) {
     if ([5, 10, 15, 20, 25, 30].indexOf(moonDayNumber) > -1)
         return 'хорошо ▶️';
     return 'неизвестно';
+}
+function getDayDurationDifference(sunTimesToday, sunTimesYtd) {
+    const sunRiseToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunrise);
+    const sunSetToday = luxon_1.DateTime.fromJSDate(sunTimesToday.sunset);
+    const dayLengthToday = sunSetToday.diff(sunRiseToday);
+    const sunRiseYtd = luxon_1.DateTime.fromJSDate(sunTimesYtd.sunrise);
+    const sunSetYtd = luxon_1.DateTime.fromJSDate(sunTimesYtd.sunset);
+    const dayLengthYtd = sunSetYtd.diff(sunRiseYtd);
+    return dayLengthToday.minus(dayLengthYtd);
+}
+exports.getDayDurationDifference = getDayDurationDifference;
+function getDayDurationDiffMsg(duration) {
+    const directionWord = duration.as('milliseconds') > 0 ? 'больше' : 'меньше';
+    let { minutes, seconds } = duration.shiftTo('minutes', 'seconds');
+    minutes = Math.ceil(Math.abs(minutes));
+    seconds = Math.ceil(Math.abs(seconds));
+    return `день на ${minutes} ${plural_ru_1.noun(minutes, 'минута', 'минуты', 'минут')} ${seconds} ${plural_ru_1.noun(seconds, 'секунда', 'секунды', 'секунд')} ${directionWord} чем вчера`;
+}
+function getDayDurationMsg(duration) {
+    let { hours, minutes } = duration.shiftTo('hours', 'minutes');
+    hours = Math.ceil(Math.abs(hours));
+    minutes = Math.ceil(Math.abs(minutes));
+    return `${hours} ${plural_ru_1.noun(minutes, 'час', 'часа', 'часов')} ${minutes} ${plural_ru_1.noun(minutes, 'минута', 'минуты', 'минут')}`;
 }
