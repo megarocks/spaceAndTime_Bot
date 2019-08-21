@@ -60,11 +60,12 @@ setLocationScene.on('location', (ctx) => __awaiter(this, void 0, void 0, functio
         yield saveCoordinatesToChatsCollection(ctx.db, chatId, { lat, lng });
         yield ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`);
         const [timeZone] = geo_tz_1.default(lat, lng);
-        const moonDay = moonCalc.calculateMoonDayFor(luxon_1.DateTime.utc(), { lat, lng });
+        const calculationDate = luxon_1.DateTime.utc();
+        const moonDay = moonCalc.calculateMoonDayFor(calculationDate, { lat, lng });
         if (!moonDay) {
             return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`);
         }
-        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone });
+        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone, calculationDate });
         yield ctx.replyWithMarkdown(reportMessage, removeKb);
     }
     catch (err) {
@@ -90,11 +91,12 @@ setLocationScene.on('text', (ctx) => __awaiter(this, void 0, void 0, function* (
         yield saveCoordinatesToChatsCollection(ctx.db, chatId, { lat, lng });
         yield ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`);
         const [timeZone] = geo_tz_1.default(lat, lng);
-        const moonDay = moonCalc.calculateMoonDayFor(luxon_1.DateTime.utc(), { lat, lng });
+        const calculationDate = luxon_1.DateTime.utc();
+        const moonDay = moonCalc.calculateMoonDayFor(calculationDate, { lat, lng });
         if (!moonDay) {
             return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`);
         }
-        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone });
+        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone, calculationDate });
         yield ctx.replyWithMarkdown(reportMessage, removeKb);
     }
     catch (e) {
@@ -123,11 +125,12 @@ app.command('day', (ctx) => __awaiter(this, void 0, void 0, function* () {
         }
         const { location: { coordinates: [lng, lat], }, } = chat;
         const [timeZone] = geo_tz_1.default(lat, lng);
-        const moonDay = moonCalc.calculateMoonDayFor(luxon_1.DateTime.utc(), { lat, lng });
+        const calculationDate = luxon_1.DateTime.utc();
+        const moonDay = moonCalc.calculateMoonDayFor(calculationDate, { lat, lng });
         if (!moonDay) {
             return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`);
         }
-        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone });
+        const reportMessage = utils_1.createMoonMessage({ moonDay, timeZone, calculationDate });
         return ctx.replyWithMarkdown(reportMessage);
     }
     catch (err) {

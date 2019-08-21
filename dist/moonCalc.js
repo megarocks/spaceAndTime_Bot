@@ -95,18 +95,20 @@ exports.calculateMoonDayFor = (date, coordinates) => {
     });
     return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd);
 };
-exports.getMoonPhaseEmojiAndLabel = (dayNumber) => {
+const phases = [
+    { symbol: '🌚', label: 'новая луна' },
+    { symbol: '🌒', label: 'молодая луна' },
+    { symbol: '🌓', label: 'первая четверть' },
+    { symbol: '🌔', label: 'прибывающая луна' },
+    { symbol: '🌕', label: 'полная луна' },
+    { symbol: '🌖', label: 'убывающая луна' },
+    { symbol: '🌗', label: 'последняя четверть' },
+    { symbol: '🌘', label: 'бальзамическая луна' },
+];
+exports.getMoonPhaseEmojiAndLabelByDate = (date) => {
     const scale = d3_scale_1.scaleQuantize()
-        .range([
-        { symbol: '🌚', label: 'новая луна' },
-        { symbol: '🌒', label: 'молодая луна' },
-        { symbol: '🌓', label: 'первая четверть' },
-        { symbol: '🌔', label: 'прибывающая луна' },
-        { symbol: '🌕', label: 'полная луна' },
-        { symbol: '🌖', label: 'убывающая луна' },
-        { symbol: '🌗', label: 'последняя четверть' },
-        { symbol: '🌘', label: 'бальзамическая луна' },
-    ])
-        .domain([1, 30]); // FIXME get number of days from current month
-    return scale(dayNumber);
+        .range(phases)
+        .domain([0, 1]);
+    const moonIlluminationPhase = suncalc_1.getMoonIllumination(date.toJSDate()).phase;
+    return scale(moonIlluminationPhase);
 };

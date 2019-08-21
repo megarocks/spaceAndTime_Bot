@@ -54,11 +54,12 @@ setLocationScene.on('location', async (ctx: IContextMessageUpdateWithDb) => {
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lng}\nШирота: ${lat}\n`)
 
     const [timeZone] = geoTz(lat, lng)
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), { lat, lng })
+    const calculationDate = DateTime.utc()
+    const moonDay = moonCalc.calculateMoonDayFor(calculationDate, { lat, lng })
     if (!moonDay) {
       return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`)
     }
-    const reportMessage = createMoonMessage({ moonDay, timeZone })
+    const reportMessage = createMoonMessage({ moonDay, timeZone, calculationDate })
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (err) {
     console.error(err)
@@ -97,11 +98,12 @@ setLocationScene.on('text', async (ctx: IContextMessageUpdateWithDb) => {
     await ctx.reply(`Благодарю. Запомнил координаты:\nДолгота: ${lat}\nШирота: ${lng}\n`)
 
     const [timeZone] = geoTz(lat, lng)
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), { lat, lng })
+    const calculationDate = DateTime.utc()
+    const moonDay = moonCalc.calculateMoonDayFor(calculationDate, { lat, lng })
     if (!moonDay) {
       return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`)
     }
-    const reportMessage = createMoonMessage({ moonDay, timeZone })
+    const reportMessage = createMoonMessage({ moonDay, timeZone, calculationDate })
     await ctx.replyWithMarkdown(reportMessage, removeKb)
   } catch (e) {
     console.error(e)
@@ -136,11 +138,12 @@ app.command('day', async (ctx: IContextMessageUpdateWithDb) => {
       },
     } = chat
     const [timeZone] = geoTz(lat, lng)
-    const moonDay = moonCalc.calculateMoonDayFor(DateTime.utc(), { lat, lng })
+    const calculationDate = DateTime.utc()
+    const moonDay = moonCalc.calculateMoonDayFor(calculationDate, { lat, lng })
     if (!moonDay) {
       return ctx.reply(`По какой-то причине не могу произвести рассчет. Попробуй спросить меня позже`)
     }
-    const reportMessage = createMoonMessage({ moonDay, timeZone })
+    const reportMessage = createMoonMessage({ moonDay, timeZone, calculationDate })
     return ctx.replyWithMarkdown(reportMessage)
   } catch (err) {
     console.error(err)

@@ -119,19 +119,22 @@ export const calculateMoonDayFor = (date: DateTime, coordinates: { lat: number; 
   return moonDays.find(d => date >= d.dayStart && date <= d.dayEnd)
 }
 
-export const getMoonPhaseEmojiAndLabel = (dayNumber: number): IMoonPhase => {
-  const scale = scaleQuantize<IMoonPhase>()
-    .range([
-      { symbol: '🌚', label: 'новая луна' },
-      { symbol: '🌒', label: 'молодая луна' },
-      { symbol: '🌓', label: 'первая четверть' },
-      { symbol: '🌔', label: 'прибывающая луна' },
-      { symbol: '🌕', label: 'полная луна' },
-      { symbol: '🌖', label: 'убывающая луна' },
-      { symbol: '🌗', label: 'последняя четверть' },
-      { symbol: '🌘', label: 'бальзамическая луна' },
-    ])
-    .domain([1, 30]) // FIXME get number of days from current month
+const phases = [
+  { symbol: '🌚', label: 'новая луна' },
+  { symbol: '🌒', label: 'молодая луна' },
+  { symbol: '🌓', label: 'первая четверть' },
+  { symbol: '🌔', label: 'прибывающая луна' },
+  { symbol: '🌕', label: 'полная луна' },
+  { symbol: '🌖', label: 'убывающая луна' },
+  { symbol: '🌗', label: 'последняя четверть' },
+  { symbol: '🌘', label: 'бальзамическая луна' },
+]
 
-  return scale(dayNumber)
+export const getMoonPhaseEmojiAndLabelByDate = (date: DateTime): IMoonPhase => {
+  const scale = scaleQuantize<IMoonPhase>()
+    .range(phases)
+    .domain([0, 1])
+
+  const moonIlluminationPhase = getMoonIllumination(date.toJSDate()).phase
+  return scale(moonIlluminationPhase)
 }
