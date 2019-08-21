@@ -97,6 +97,7 @@ function createNotificationJob(chat: IChat) {
         chat,
         moonDay,
         timeZone,
+        calculationDate
       })
       messagesArray.push(moonRelatedMessage)
       debug('moon Related Message: ', moonRelatedMessage)
@@ -157,8 +158,8 @@ function createNotificationJob(chat: IChat) {
   }
 }
 
-function getMoonNewsMessage(options: { moonDay: IMoonDay | undefined; chat: IChat; timeZone: string }): string | undefined {
-  const { moonDay, chat, timeZone } = options
+function getMoonNewsMessage(options: { moonDay: IMoonDay | undefined; chat: IChat; timeZone: string, calculationDate: DateTime }): string | undefined {
+  const { moonDay, chat, timeZone, calculationDate } = options
   if (!moonDay) {
     console.warn(`Moon day was not calculated for: ${chat.chatId} at ${new Date().toISOString()}`)
     return
@@ -167,7 +168,7 @@ function getMoonNewsMessage(options: { moonDay: IMoonDay | undefined; chat: ICha
     debug('chat %s is already notified about moon day: %d', chat.chatId, moonDay.dayNumber)
     return
   } // means already notified
-  return createMoonMessage({ moonDay, timeZone })
+  return createMoonMessage({ moonDay, timeZone, calculationDate })
 }
 
 function getSolarNewsMessage(options: { chat: IChat; calculationDate: DateTime; timeZone: string }): string | undefined {

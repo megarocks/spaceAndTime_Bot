@@ -99,6 +99,7 @@ function createNotificationJob(chat) {
                 chat,
                 moonDay,
                 timeZone,
+                calculationDate
             });
             messagesArray.push(moonRelatedMessage);
             debug('moon Related Message: ', moonRelatedMessage);
@@ -152,7 +153,7 @@ function createNotificationJob(chat) {
     });
 }
 function getMoonNewsMessage(options) {
-    const { moonDay, chat, timeZone } = options;
+    const { moonDay, chat, timeZone, calculationDate } = options;
     if (!moonDay) {
         console.warn(`Moon day was not calculated for: ${chat.chatId} at ${new Date().toISOString()}`);
         return;
@@ -161,7 +162,7 @@ function getMoonNewsMessage(options) {
         debug('chat %s is already notified about moon day: %d', chat.chatId, moonDay.dayNumber);
         return;
     } // means already notified
-    return utils_1.createMoonMessage({ moonDay, timeZone });
+    return utils_1.createMoonMessage({ moonDay, timeZone, calculationDate });
 }
 function getSolarNewsMessage(options) {
     const { chat: { chatId, location: { coordinates: [lng, lat], }, solarDateNotified, }, calculationDate, timeZone, } = options;

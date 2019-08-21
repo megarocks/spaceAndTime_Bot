@@ -3,14 +3,14 @@ import { calendar_v3 } from 'googleapis'
 import Schema$Event = calendar_v3.Schema$Event
 import { noun } from 'plural-ru'
 
-import { getMoonPhaseEmojiAndLabel } from './moonCalc'
+import { getMoonPhaseEmojiAndLabelByDate } from './moonCalc'
 import { IMoonDay } from './interfaces'
 import { GetTimesResult } from 'suncalc'
 
-export function createMoonMessage({ moonDay, timeZone }: { moonDay: IMoonDay; timeZone: string }): string {
+export function createMoonMessage({ moonDay, timeZone, calculationDate }: { moonDay: IMoonDay; timeZone: string, calculationDate: DateTime }): string {
   const { dayNumber, dayStart, dayEnd } = moonDay
 
-  const { symbol, label } = getMoonPhaseEmojiAndLabel(dayNumber)
+  const { symbol, label } = getMoonPhaseEmojiAndLabelByDate(calculationDate)
 
   return `🌝 Луна:
 ${symbol} день: *${dayNumber}* - ${label}

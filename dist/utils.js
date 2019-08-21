@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const luxon_1 = require("luxon");
 const plural_ru_1 = require("plural-ru");
 const moonCalc_1 = require("./moonCalc");
-function createMoonMessage({ moonDay, timeZone }) {
+function createMoonMessage({ moonDay, timeZone, calculationDate }) {
     const { dayNumber, dayStart, dayEnd } = moonDay;
-    const { symbol, label } = moonCalc_1.getMoonPhaseEmojiAndLabel(dayNumber);
+    const { symbol, label } = moonCalc_1.getMoonPhaseEmojiAndLabelByDate(calculationDate);
     return `🌝 Луна:
 ${symbol} день: *${dayNumber}* - ${label}
 🎭 тип дня: _${getMoonDayType(moonDay.dayNumber)}_
